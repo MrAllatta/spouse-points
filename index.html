@@ -293,6 +293,123 @@
       font-style: italic;
     }
 
+    .mode-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.82rem;
+      cursor: pointer;
+      color: var(--text-light);
+      transition: all 0.2s;
+    }
+
+    .mode-btn.active {
+      background: var(--text);
+      color: white;
+      border-color: var(--text);
+    }
+
+    .request-submit {
+      width: 100%;
+      padding: 0.9rem;
+      background: var(--text);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .request-submit:hover { background: #2d2f4a; }
+    .request-submit:active { transform: scale(0.98); }
+
+    .pending-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin: 0.5rem 1rem;
+      max-width: 600px;
+      width: calc(100% - 2rem);
+      box-shadow: var(--shadow);
+    }
+
+    .pending-section h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .pending-entry {
+      background: #fef6f3;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .pending-entry .pending-who {
+      font-size: 0.8rem;
+      color: var(--text-light);
+      margin-bottom: 0.4rem;
+    }
+
+    .pending-entry .pending-text {
+      font-size: 0.95rem;
+      margin-bottom: 0.7rem;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .resolve-btns { display: flex; gap: 0.5rem; }
+
+    .resolve-btn {
+      flex: 1;
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: none;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .resolve-btn:hover { opacity: 0.8; }
+    .resolve-award { background: var(--success); color: white; }
+    .resolve-pass { background: var(--border); color: var(--text-light); }
+
+    .pending-empty {
+      text-align: center;
+      color: var(--text-light);
+      font-style: italic;
+      font-size: 0.9rem;
+      padding: 0.5rem;
+    }
+
+    .entry-tag {
+      font-size: 0.72rem;
+      color: var(--text-light);
+      font-style: italic;
+      margin-left: 0.3rem;
+      font-weight: normal;
+    }
+
+    .history-entry.passed { opacity: 0.4; }
+
     @media (max-width: 480px) {
       header h1 { font-size: 1.8rem; }
       .scoreboard { gap: 1rem; }
@@ -322,7 +439,12 @@
   </div>
 
   <div class="award-section">
-    <h2>Award Points</h2>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="mode-award" onclick="setMode('award')">Award Points</button>
+      <button class="mode-btn" id="mode-request" onclick="setMode('request')">Request Points</button>
+    </div>
+
+    <h2 id="section-heading">Award Points</h2>
 
     <div class="recipient-toggle">
       <button id="toggle-a" class="active" onclick="setRecipient('a')">
@@ -338,7 +460,14 @@
     <textarea class="custom-reason" id="custom-reason" rows="2"
               placeholder="Or write your own reason..."></textarea>
 
-    <button class="award-btn" onclick="awardPoints()">Award Points</button>
+    <button class="award-btn" id="submit-btn" onclick="handleSubmit()">Award Points</button>
+  </div>
+
+  <div class="pending-section" id="pending-section" style="display:none">
+    <h2>Waiting for Notice</h2>
+    <div id="pending-list">
+      <div class="pending-empty">Nothing pending. Someone must be feeling seen.</div>
+    </div>
   </div>
 
   <div class="history">
@@ -370,6 +499,14 @@
       { emoji: "🛏️", label: "Made bed", key: "bed" },
       { emoji: "💬", label: "Actually listened", key: "listened" },
       { emoji: "📱", label: "Put phone down", key: "phone" },
+    ];
+
+    const requestQuips = [
+      "Just going to leave this here.",
+      "Not saying anything. Just noting it for the record.",
+      "This may or may not have happened. Allegedly.",
+      "Requesting acknowledgment. No pressure. Some pressure.",
+      "Filed for consideration. Take your time. (Please don't take your time.)",
     ];
 
     const quips = {
@@ -444,8 +581,10 @@
     let state = {
       recipient: "a",
       selectedCategory: null,
+      mode: "award",
       scores: { a: 0, b: 0 },
       history: [],
+      pending: [],
     };
 
     function init() {
@@ -474,6 +613,17 @@
       saveState();
     }
 
+    function setMode(mode) {
+      state.mode = mode;
+      document.getElementById("mode-award").classList.toggle("active", mode === "award");
+      document.getElementById("mode-request").classList.toggle("active", mode === "request");
+      document.getElementById("section-heading").textContent =
+        mode === "award" ? "Award Points" : "Request Points";
+      const btn = document.getElementById("submit-btn");
+      btn.textContent = mode === "award" ? "Award Points" : "Request Points";
+      btn.className = mode === "award" ? "award-btn" : "request-submit";
+    }
+
     function setRecipient(who) {
       state.recipient = who;
       document.getElementById("toggle-a").className = who === "a" ? "active" : "";
@@ -490,10 +640,14 @@
       }
     }
 
+    function handleSubmit() {
+      if (state.mode === "award") awardPoints();
+      else requestPoints();
+    }
+
     function awardPoints() {
       const custom = document.getElementById("custom-reason").value.trim();
       const cat = state.selectedCategory;
-
       if (!cat && !custom) return;
 
       const points = 1 + Math.floor(Math.random() * 3);
@@ -508,23 +662,106 @@
       document.getElementById(`score-${state.recipient}`).textContent = state.scores[state.recipient];
 
       const entry = {
+        id: Date.now(),
         recipient: recipientName,
         category: cat ? categories.find((c) => c.key === cat)?.label : "Custom",
-        reason: custom || (cat ? categories.find((c) => c.key === cat)?.label : ""),
         quip: quip,
         points: points,
         time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+        requested: false,
+        passed: false,
       };
       state.history.unshift(entry);
       renderHistory();
-
       showToast(points, quip, recipientName);
+      clearForm();
+      saveState();
+    }
 
+    function requestPoints() {
+      const custom = document.getElementById("custom-reason").value.trim();
+      const cat = state.selectedCategory;
+      if (!cat && !custom) return;
+
+      const nameEl = document.getElementById(`name-${state.recipient}`);
+      const requesterName = nameEl.value || (state.recipient === "a" ? "Partner A" : "Partner B");
+      const label = custom || (cat ? categories.find((c) => c.key === cat)?.label : "");
+      const quip = requestQuips[Math.floor(Math.random() * requestQuips.length)];
+
+      const request = {
+        id: Date.now(),
+        requester: state.recipient,
+        requesterName: requesterName,
+        category: cat,
+        label: label,
+        quip: quip,
+        time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+      };
+      state.pending.unshift(request);
+      renderPending();
+
+      const toast = document.getElementById("toast");
+      document.getElementById("toast-points").textContent = `${requesterName} is requesting credit`;
+      document.getElementById("toast-quip").textContent = `"${label}" — awaiting acknowledgment.`;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 3500);
+
+      clearForm();
+      saveState();
+    }
+
+    function resolveRequest(id, action) {
+      const idx = state.pending.findIndex((r) => r.id === id);
+      if (idx === -1) return;
+      const request = state.pending[idx];
+      state.pending.splice(idx, 1);
+
+      if (action === "award") {
+        const points = 1 + Math.floor(Math.random() * 3);
+        const key = request.category || "custom";
+        const pool = quips[key] || quips.custom;
+        const quip = pool[Math.floor(Math.random() * pool.length)];
+
+        state.scores[request.requester] += points;
+        document.getElementById(`score-${request.requester}`).textContent =
+          state.scores[request.requester];
+
+        const entry = {
+          id: Date.now(),
+          recipient: request.requesterName,
+          category: request.label,
+          quip: quip,
+          points: points,
+          time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+          requested: true,
+          passed: false,
+        };
+        state.history.unshift(entry);
+        renderHistory();
+        showToast(points, quip, request.requesterName);
+      } else {
+        const entry = {
+          id: Date.now(),
+          recipient: request.requesterName,
+          category: request.label,
+          quip: "Request noted. Filed quietly.",
+          points: 0,
+          time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+          requested: true,
+          passed: true,
+        };
+        state.history.unshift(entry);
+        renderHistory();
+      }
+
+      renderPending();
+      saveState();
+    }
+
+    function clearForm() {
       document.getElementById("custom-reason").value = "";
       document.querySelectorAll(".category-btn").forEach((b) => b.classList.remove("selected"));
       state.selectedCategory = null;
-
-      saveState();
     }
 
     function showToast(points, quip, name) {
@@ -535,21 +772,51 @@
       setTimeout(() => toast.classList.remove("show"), 3500);
     }
 
+    function renderPending() {
+      const section = document.getElementById("pending-section");
+      const list = document.getElementById("pending-list");
+
+      if (state.pending.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      list.innerHTML = state.pending
+        .map(
+          (r) => `<div class="pending-entry">
+            <div class="pending-who">${r.requesterName} &middot; ${r.time}</div>
+            <div class="pending-text">${r.quip}<br><em>${r.label}</em></div>
+            <div class="resolve-btns">
+              <button class="resolve-btn resolve-award" onclick="resolveRequest(${r.id}, 'award')">Award it</button>
+              <button class="resolve-btn resolve-pass" onclick="resolveRequest(${r.id}, 'pass')">Pass</button>
+            </div>
+          </div>`
+        )
+        .join("");
+    }
+
     function renderHistory() {
       const list = document.getElementById("history-list");
       if (state.history.length === 0) {
-        list.innerHTML = '<div class="history-empty">No points awarded yet. Someone must have done something.</div>';
+        list.innerHTML =
+          '<div class="history-empty">No points awarded yet. Someone must have done something.</div>';
         return;
       }
       list.innerHTML = state.history
         .slice(0, 20)
-        .map(
-          (e) =>
-            `<div class="history-entry">
-              <span class="entry-text"><strong>${e.recipient}</strong> &middot; ${e.quip}</span>
-              <span class="entry-points">+${e.points}</span>
-            </div>`
-        )
+        .map((e) => {
+          const tag = e.passed
+            ? '<span class="entry-tag">passed</span>'
+            : e.requested
+            ? '<span class="entry-tag">requested</span>'
+            : "";
+          const pts = e.passed ? "" : `<span class="entry-points">+${e.points}</span>`;
+          return `<div class="history-entry${e.passed ? " passed" : ""}">
+            <span class="entry-text"><strong>${e.recipient}</strong>${tag} &middot; ${e.quip}</span>
+            ${pts}
+          </div>`;
+        })
         .join("");
     }
 
@@ -557,6 +824,7 @@
       const data = {
         scores: state.scores,
         history: state.history,
+        pending: state.pending,
         names: {
           a: document.getElementById("name-a").value,
           b: document.getElementById("name-b").value,
@@ -582,6 +850,10 @@
         if (data.history) {
           state.history = data.history;
           renderHistory();
+        }
+        if (data.pending) {
+          state.pending = data.pending;
+          renderPending();
         }
       } catch (e) {}
     }
