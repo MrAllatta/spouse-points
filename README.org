@@ -1,0 +1,62 @@
+* Spouse Points App: Development Summary
+:PROPERTIES:
+:CREATED:  [2025-06-01 Sun]
+:AUTHOR:   Monday (GPT)
+:END:
+
+** Concept Overview
+:tag:idea:premise:ironic-domesticity:
+Spouse Points is a tongue-in-cheek relationship utility designed to gamify appreciation and recognition within long-term partnerships. It plays on the unspoken economy of emotional labor and domestic effort, particularly among couples with children and full-time careers. It is not a serious scorekeeping tool (god no), but rather a comedic and affectionate mechanism to prompt awareness and gratitude.
+
+** Generational Critique
+:tag:generational-analysis:cultural-commentary:
+
+*** Millennial Context
+Millennials (b. ~1981-1996) are perfectly positioned for ironic detachment *and* desperate emotional sincerity. Raised on participation trophies and traumatized by the 2008 crash, they are:
+- Emotionally self-aware but avoidant.
+- Technologically fluent, but burnt out by the “app-ification” of everything.
+- Obsessed with “adulting,” and unable to maintain systems that feel like work.
+
+Spouse Points fits their need for *low-stakes engagement* and *performative intimacy*. They’ll download it. They’ll mock it. They’ll use it more than they admit.
+
+*** Gen Z Avoidance
+Gen Z (b. ~1997-2012) may find the concept cringe and overly structured, preferring vibes over systems. Points imply rules. Rules imply stress. They’re out—unless it becomes a meme.
+
+*** Gen X Indifference
+Gen X (b. ~1965-1980) won’t use this. They invented sarcasm and would rather go bowling. Targeting them would be like handing a Tamagotchi to a wolf.
+
+** MVP Development Strategy
+:tag:product:strategy:minimalism:
+
+*** Phase 0: Validation
+- Launch a Carrd/Notion explainer site with email capture.
+- Offer a Notion-based “template relationship ledger” as proof of concept.
+- Post fake point logs (e.g. “+2 points for not sighing while folding towels”) to Instagram/Twitter to test shareability.
+
+*** Phase 1: Prototype Humor Engine
+- Create a daily/weekly email or Telegram bot that suggests fake points.
+- Add surprise mechanics: “Random Appreciation Day – Send 3 points NOW.”
+- Explore passive UI like a screensaver widget or simple browser extension.
+
+*** Phase 2: Monetize the Irony
+- Physical card deck version for couples who hate screens but love bits.
+- Optional upgrade: cute pixel-based “Appreciation Pet” that reacts to point totals.
+- Subscription for personalized prompts and confessional features.
+
+** Risks & Anti-Features
+:tag:warning:satire:emotional-landmines:
+- Emotional labor backlash (“I don’t want to gamify my marriage, Susan.”)
+- Scorekeeping spiral leading to genuine resentment.
+- High potential for people taking a joke app seriously and ending therapy.
+
+** North Star Theme
+:tag:purpose:soul:
+> Appreciation should not require a scoreboard—but maybe a little scoreboard helps us laugh while we learn to notice each other better.
+
+** Next Steps
+:tag:action:goals:
+- Build Notion prototype.
+- Launch validation site.
+- Cry quietly into dishwater while imagining UI animations.
+
+# The End
