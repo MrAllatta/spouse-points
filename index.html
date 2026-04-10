@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spouse Points</title>
+  <style>
+    :root {
+      --bg: #faf7f2;
+      --card: #ffffff;
+      --accent: #e07a5f;
+      --accent-hover: #c9623f;
+      --text: #3d405b;
+      --text-light: #81849a;
+      --border: #e8e4de;
+      --success: #81b29a;
+      --shadow: 0 2px 16px rgba(61, 64, 91, 0.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      text-align: center;
+      padding: 2.5rem 1rem 1rem;
+      max-width: 600px;
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 0.3rem;
+    }
+
+    header .tagline {
+      color: var(--text-light);
+      font-size: 1rem;
+      font-style: italic;
+    }
+
+    .scoreboard {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      padding: 1.5rem 1rem;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .score-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.2rem 1.8rem;
+      text-align: center;
+      flex: 1;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s;
+    }
+
+    .score-card:hover { transform: translateY(-2px); }
+
+    .score-card .name {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-light);
+      margin-bottom: 0.4rem;
+    }
+
+    .score-card .name-input {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-light);
+      border: none;
+      border-bottom: 1px dashed var(--border);
+      background: transparent;
+      text-align: center;
+      width: 100%;
+      padding: 0.2rem;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .score-card .name-input:focus {
+      border-bottom-color: var(--accent);
+    }
+
+    .score-card .points {
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .award-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin: 0.5rem 1rem;
+      max-width: 600px;
+      width: calc(100% - 2rem);
+      box-shadow: var(--shadow);
+    }
+
+    .award-section h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .recipient-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .recipient-toggle button {
+      flex: 1;
+      padding: 0.6rem;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .recipient-toggle button.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .category-btn {
+      padding: 0.7rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .category-btn:hover {
+      border-color: var(--accent);
+      background: #fef6f3;
+    }
+
+    .category-btn.selected {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+    }
+
+    .custom-reason {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 1rem;
+    }
+
+    .custom-reason:focus { border-color: var(--accent); }
+
+    .award-btn {
+      width: 100%;
+      padding: 0.9rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .award-btn:hover { background: var(--accent-hover); }
+    .award-btn:active { transform: scale(0.98); }
+
+    .result-toast {
+      position: fixed;
+      bottom: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card);
+      border: 2px solid var(--success);
+      border-radius: 16px;
+      padding: 1.5rem 2rem;
+      max-width: 500px;
+      width: calc(100% - 2rem);
+      box-shadow: 0 8px 32px rgba(61, 64, 91, 0.15);
+      text-align: center;
+      transition: bottom 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 100;
+    }
+
+    .result-toast.show { bottom: 2rem; }
+
+    .result-toast .point-award {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.4rem;
+    }
+
+    .result-toast .quip {
+      color: var(--text);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .history {
+      max-width: 600px;
+      width: calc(100% - 2rem);
+      margin: 1rem;
+      padding-bottom: 2rem;
+    }
+
+    .history h3 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-light);
+      margin-bottom: 0.8rem;
+      text-align: center;
+    }
+
+    .history-entry {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+      margin-bottom: 0.4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+
+    .history-entry .entry-text { flex: 1; }
+    .history-entry .entry-points {
+      color: var(--accent);
+      font-weight: 700;
+      margin-left: 1rem;
+      white-space: nowrap;
+    }
+
+    .history-empty {
+      text-align: center;
+      color: var(--text-light);
+      font-style: italic;
+      padding: 1rem;
+      font-size: 0.9rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem;
+      color: var(--text-light);
+      font-size: 0.8rem;
+      font-style: italic;
+    }
+
+    @media (max-width: 480px) {
+      header h1 { font-size: 1.8rem; }
+      .scoreboard { gap: 1rem; }
+      .score-card .points { font-size: 2.2rem; }
+      .category-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Spouse Points</h1>
+    <p class="tagline">A little scoreboard helps us laugh while we learn to notice each other.</p>
+  </header>
+
+  <div class="scoreboard">
+    <div class="score-card">
+      <input class="name-input" id="name-a" value="PARTNER A" maxlength="16"
+             onfocus="this.select()" />
+      <div class="points" id="score-a">0</div>
+    </div>
+    <div class="score-card">
+      <input class="name-input" id="name-b" value="PARTNER B" maxlength="16"
+             onfocus="this.select()" />
+      <div class="points" id="score-b">0</div>
+    </div>
+  </div>
+
+  <div class="award-section">
+    <h2>Award Points</h2>
+
+    <div class="recipient-toggle">
+      <button id="toggle-a" class="active" onclick="setRecipient('a')">
+        <span id="toggle-label-a">Partner A</span>
+      </button>
+      <button id="toggle-b" onclick="setRecipient('b')">
+        <span id="toggle-label-b">Partner B</span>
+      </button>
+    </div>
+
+    <div class="category-grid" id="categories"></div>
+
+    <textarea class="custom-reason" id="custom-reason" rows="2"
+              placeholder="Or write your own reason..."></textarea>
+
+    <button class="award-btn" onclick="awardPoints()">Award Points</button>
+  </div>
+
+  <div class="history">
+    <h3>The Ledger</h3>
+    <div id="history-list">
+      <div class="history-empty">No points awarded yet. Someone must have done something.</div>
+    </div>
+  </div>
+
+  <footer>
+    Appreciation should not require a scoreboard &mdash; but here we are.
+  </footer>
+
+  <div class="result-toast" id="toast">
+    <div class="point-award" id="toast-points"></div>
+    <div class="quip" id="toast-quip"></div>
+  </div>
+
+  <script>
+    const categories = [
+      { emoji: "🍳", label: "Cooked", key: "cooked" },
+      { emoji: "🧹", label: "Cleaned", key: "cleaned" },
+      { emoji: "🧒", label: "Kid duty", key: "kids" },
+      { emoji: "🛒", label: "Groceries", key: "groceries" },
+      { emoji: "😤", label: "Didn't sigh", key: "nosigh" },
+      { emoji: "🤐", label: "Held tongue", key: "tongue" },
+      { emoji: "☕", label: "Made coffee", key: "coffee" },
+      { emoji: "🛏️", label: "Made bed", key: "bed" },
+      { emoji: "💬", label: "Actually listened", key: "listened" },
+      { emoji: "📱", label: "Put phone down", key: "phone" },
+    ];
+
+    const quips = {
+      cooked: [
+        "Heated something that wasn't cereal. Groundbreaking.",
+        "The smoke alarm stayed silent. That's worth double.",
+        "Fed the humans. Again. The streak continues.",
+        "Points for effort. Extra points if it was edible.",
+      ],
+      cleaned: [
+        "Cleaned without being asked. Alert the historians.",
+        "The counter can be seen. This is not a drill.",
+        "Voluntarily touched a sponge. What a time to be alive.",
+        "Cleaned the thing behind the other thing. True love.",
+      ],
+      kids: [
+        "Survived a full shift with the small ones. Medal pending.",
+        "Handled a meltdown that wasn't their own. Impressive.",
+        "Did bedtime solo. The bravest act of the week.",
+        "Managed homework without anyone crying. Including themselves.",
+      ],
+      groceries: [
+        "Went to the store. Came back with what was on the list. Mostly.",
+        "Navigated the parking lot on a Saturday. Heroic.",
+        "Remembered the thing we always forget. Who is this person?",
+        "Only impulse-bought two things. Personal best.",
+      ],
+      nosigh: [
+        "+2 for not sighing while folding towels.",
+        "Absorbed a moment of chaos without the exhale. Noted.",
+        "The sigh was forming. It was suppressed. That's growth.",
+        "Witnessed the mess. Said nothing. Breathed normally. Saint.",
+      ],
+      tongue: [
+        "Had the thought. Did not share the thought. Wisdom.",
+        "Swallowed a critique that would have started a whole thing.",
+        "Chose peace over accuracy. The hardest trade.",
+        "Typed it. Deleted it. Put the phone down. Legend.",
+      ],
+      coffee: [
+        "Made coffee for the other one first. Peak partnership.",
+        "The cup was waiting. No words needed. Just warmth.",
+        "Remembered the exact ratio. That's not caffeine, that's love.",
+        "Pre-dawn coffee delivery. The bar is low and yet.",
+      ],
+      bed: [
+        "Made the bed. No one asked. No one noticed. Points anyway.",
+        "Pillows arranged. Blanket straight-ish. Enough.",
+        "The bed was made before noon. A new personal record.",
+        "Did the thing that will be undone in 14 hours. Sisyphean devotion.",
+      ],
+      listened: [
+        "Maintained eye contact during the full story. All of it.",
+        "Heard the thing underneath the thing. That's the hard part.",
+        "Didn't check the phone. Didn't glaze over. Didn't redirect. Rare.",
+        "Asked a follow-up question. An actual one. Points.",
+      ],
+      phone: [
+        "Put the phone down during dinner. Radical presence.",
+        "Chose the person in the room over the people in the feed.",
+        "The phone was in another room. On purpose. For an hour.",
+        "Screen time went down. Face time went up. The real kind.",
+      ],
+      custom: [
+        "Did a thing. It was noticed. That's the whole game.",
+        "Went above and beyond the baseline of coexistence.",
+        "Small act. Big noticing. Points awarded with warmth.",
+        "The fact that you're tracking this means you're paying attention.",
+      ],
+    };
+
+    let state = {
+      recipient: "a",
+      selectedCategory: null,
+      scores: { a: 0, b: 0 },
+      history: [],
+    };
+
+    function init() {
+      const grid = document.getElementById("categories");
+      categories.forEach((cat) => {
+        const btn = document.createElement("button");
+        btn.className = "category-btn";
+        btn.textContent = `${cat.emoji} ${cat.label}`;
+        btn.onclick = () => selectCategory(cat.key, btn);
+        btn.dataset.key = cat.key;
+        grid.appendChild(btn);
+      });
+
+      loadState();
+      syncNames();
+
+      document.getElementById("name-a").addEventListener("input", syncNames);
+      document.getElementById("name-b").addEventListener("input", syncNames);
+    }
+
+    function syncNames() {
+      const a = document.getElementById("name-a").value || "Partner A";
+      const b = document.getElementById("name-b").value || "Partner B";
+      document.getElementById("toggle-label-a").textContent = a;
+      document.getElementById("toggle-label-b").textContent = b;
+      saveState();
+    }
+
+    function setRecipient(who) {
+      state.recipient = who;
+      document.getElementById("toggle-a").className = who === "a" ? "active" : "";
+      document.getElementById("toggle-b").className = who === "b" ? "active" : "";
+    }
+
+    function selectCategory(key, btn) {
+      document.querySelectorAll(".category-btn").forEach((b) => b.classList.remove("selected"));
+      if (state.selectedCategory === key) {
+        state.selectedCategory = null;
+      } else {
+        state.selectedCategory = key;
+        btn.classList.add("selected");
+      }
+    }
+
+    function awardPoints() {
+      const custom = document.getElementById("custom-reason").value.trim();
+      const cat = state.selectedCategory;
+
+      if (!cat && !custom) return;
+
+      const points = 1 + Math.floor(Math.random() * 3);
+      const key = cat || "custom";
+      const pool = quips[key];
+      const quip = pool[Math.floor(Math.random() * pool.length)];
+
+      const nameEl = document.getElementById(`name-${state.recipient}`);
+      const recipientName = nameEl.value || (state.recipient === "a" ? "Partner A" : "Partner B");
+
+      state.scores[state.recipient] += points;
+      document.getElementById(`score-${state.recipient}`).textContent = state.scores[state.recipient];
+
+      const entry = {
+        recipient: recipientName,
+        category: cat ? categories.find((c) => c.key === cat)?.label : "Custom",
+        reason: custom || (cat ? categories.find((c) => c.key === cat)?.label : ""),
+        quip: quip,
+        points: points,
+        time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+      };
+      state.history.unshift(entry);
+      renderHistory();
+
+      showToast(points, quip, recipientName);
+
+      document.getElementById("custom-reason").value = "";
+      document.querySelectorAll(".category-btn").forEach((b) => b.classList.remove("selected"));
+      state.selectedCategory = null;
+
+      saveState();
+    }
+
+    function showToast(points, quip, name) {
+      const toast = document.getElementById("toast");
+      document.getElementById("toast-points").textContent = `+${points} to ${name}`;
+      document.getElementById("toast-quip").textContent = quip;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 3500);
+    }
+
+    function renderHistory() {
+      const list = document.getElementById("history-list");
+      if (state.history.length === 0) {
+        list.innerHTML = '<div class="history-empty">No points awarded yet. Someone must have done something.</div>';
+        return;
+      }
+      list.innerHTML = state.history
+        .slice(0, 20)
+        .map(
+          (e) =>
+            `<div class="history-entry">
+              <span class="entry-text"><strong>${e.recipient}</strong> &middot; ${e.quip}</span>
+              <span class="entry-points">+${e.points}</span>
+            </div>`
+        )
+        .join("");
+    }
+
+    function saveState() {
+      const data = {
+        scores: state.scores,
+        history: state.history,
+        names: {
+          a: document.getElementById("name-a").value,
+          b: document.getElementById("name-b").value,
+        },
+      };
+      try { localStorage.setItem("spouse-points", JSON.stringify(data)); } catch (e) {}
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem("spouse-points");
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (data.scores) {
+          state.scores = data.scores;
+          document.getElementById("score-a").textContent = state.scores.a;
+          document.getElementById("score-b").textContent = state.scores.b;
+        }
+        if (data.names) {
+          document.getElementById("name-a").value = data.names.a || "PARTNER A";
+          document.getElementById("name-b").value = data.names.b || "PARTNER B";
+        }
+        if (data.history) {
+          state.history = data.history;
+          renderHistory();
+        }
+      } catch (e) {}
+    }
+
+    init();
+  </script>
+</body>
+</html>
