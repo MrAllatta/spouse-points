@@ -499,6 +499,8 @@
       { emoji: "🛏️", label: "Made bed", key: "bed" },
       { emoji: "💬", label: "Actually listened", key: "listened" },
       { emoji: "📱", label: "Put phone down", key: "phone" },
+      { emoji: "🍽️", label: "Did the dishes", key: "dishes" },
+      { emoji: "👶", label: "Gave birth", key: "birth" },
     ];
 
     const requestQuips = [
@@ -569,6 +571,18 @@
         "Chose the person in the room over the people in the feed.",
         "The phone was in another room. On purpose. For an hour.",
         "Screen time went down. Face time went up. The real kind.",
+      ],
+      dishes: [
+        "Did the dishes. Tonight. Not tomorrow morning. Let that sink in.",
+        "The sink is empty. The bar was low and still.",
+        "Washed every dish. Did not mention it for at least ten minutes.",
+        "Dishes done before bed. A new era begins. Probably.",
+      ],
+      birth: [
+        "Gave birth to your child. The scoreboard does not have enough zeros.",
+        "Brought a human into the world. You are playing a different game entirely.",
+        "One million points. The gap will never close. That's appropriate.",
+        "The atomic bomb of spouse points. All other entries are now footnotes.",
       ],
       custom: [
         "Did a thing. It was noticed. That's the whole game.",
@@ -650,7 +664,7 @@
       const cat = state.selectedCategory;
       if (!cat && !custom) return;
 
-      const points = 1 + Math.floor(Math.random() * 3);
+      const points = cat === "birth" ? 1000000 : 1 + Math.floor(Math.random() * 3);
       const key = cat || "custom";
       const pool = quips[key];
       const quip = pool[Math.floor(Math.random() * pool.length)];
@@ -717,7 +731,7 @@
       state.pending.splice(idx, 1);
 
       if (action === "award") {
-        const points = 1 + Math.floor(Math.random() * 3);
+        const points = request.category === "birth" ? 1000000 : 1 + Math.floor(Math.random() * 3);
         const key = request.category || "custom";
         const pool = quips[key] || quips.custom;
         const quip = pool[Math.floor(Math.random() * pool.length)];
