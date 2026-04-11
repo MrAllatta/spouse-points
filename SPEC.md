@@ -23,7 +23,7 @@ One partner notices something the other did and awards points for it. Spontaneou
 
 - Recipient is the partner who did the thing
 - Category selected from a fixed grid (or freeform)
-- Points awarded: base value, randomized within a range (current: 1–3)
+- Points awarded: fixed value per category, with sensible defaults — not randomized
 - A quip surfaces on award — dry, specific, not generic
 
 ### 2. Request Points
@@ -67,10 +67,28 @@ Example half-lives (rough starting values):
 
 Tuning these will require actual use. The first values will be wrong.
 
-### Point Weighting
-Base point values per category, with an optional multiplier the awarder sets at time of award. "You did the dishes — 2 points. You did them without being asked for the third week running — that felt like more."
+### Point Values
+Each category has a fixed default point value. These are not randomized — the value of an act should feel consistent and legible, not arbitrary.
 
-The multiplier should be simple: 1× / 2× / 3×. Not a slider.
+Default values (illustrative):
+| Category | Default Points |
+|---|---|
+| Made coffee | 1 |
+| Did the dishes | 2 |
+| Cooked | 3 |
+| Cleaned | 3 |
+| Groceries | 3 |
+| Kid duty | 4 |
+| Didn't sigh | 2 |
+| Held tongue | 3 |
+| Actually listened | 4 |
+| Put phone down | 2 |
+| Made bed | 1 |
+| Gave birth | 1,000,000 |
+
+An optional multiplier at time of award handles the "I did them without being asked for the third week running — that felt like more" case. Simple: 1× / 2× / 3×. Not a slider.
+
+Both the default values and the multiplier options are adjustable in Settings.
 
 ### Pairing
 Two partners share a single ledger. Connection flow:
@@ -79,6 +97,18 @@ Two partners share a single ledger. Connection flow:
 3. They enter the code — linked
 
 No email required. No accounts in the friction-heavy sense. The code is the handshake.
+
+### Settings Page
+A shared settings screen accessible to both partners. Covers:
+
+- **Partner names** — what appears on scorecards and in the ledger
+- **Category point values** — adjust defaults per category; changes apply going forward, not retroactively
+- **Decay half-lives** — per category, if decay is enabled
+- **Decay on/off toggle** — the feature should be opt-in; not every couple will want it
+- **Reset ledger** — wipe history and scores; requires confirmation from both partners (or a deliberate double-tap)
+- **Pairing** — invite code to connect a second device; disconnect option
+
+Settings should be mundane-looking on purpose. The emotional texture of the app lives in the award/request flow, not in configuration.
 
 ### Notifications
 Push notification when your partner awards you points. The quip is the notification body.
@@ -164,8 +194,10 @@ The `index.html` prototype is a functional proof of concept for:
 - The emotional tone of the quip writing
 
 What it does not yet capture:
+- Fixed per-category point values (currently randomized 1–3 as a placeholder)
+- Award multiplier (1× / 2× / 3×)
 - Decay
-- Point weighting / multipliers
+- Settings page
 - Two-device pairing
 - Notifications
 - Any backend
