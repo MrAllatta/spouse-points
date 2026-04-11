@@ -16,6 +16,28 @@ The categories that matter most here aren't chores. "Didn't sigh." "Held tongue.
 
 ---
 
+## On Labor, Gender, and Scope
+
+The categories in this app are, if you look at them honestly, coded as women's work. Dishes. Cooking. Cleaning. Kid duty. This is not an accident and it's not a blind spot — it's the origin story. The app emerged from a specific household dynamic, and the humor lands because it names something a lot of couples recognize in themselves: an unspoken imbalance in who does what, and who notices.
+
+We don't claim to go deeper than that. This is not a labor equity framework. It's not Fair Play. It's a scoreboard with good jokes.
+
+**On gender:** the app is agnostic. The imbalance it reflects is traditional, but who holds which side of it varies. If the joke landed for you, you recognized your household in it. That's the whole thing. We make no assumptions about which partner is which.
+
+**The open question: does earning income earn points?**
+
+Right now the app tracks domestic and emotional labor exclusively. But household contribution includes things the categories don't touch: being the primary earner, managing finances, subsidizing your partner's career by absorbing more home duties so they can pursue theirs. These are real forms of labor. They're invisible in a different way.
+
+The app doesn't track them. That's a choice worth naming. A few reasons:
+
+- Domestic and emotional labor is the category that *already goes unnoticed* most often. Income is at least legible — there's a number on a pay stub. The dishes at 11pm have no receipt.
+- Mixing financial contribution into the same scoreboard risks turning "I earn more" into a trump card that closes the conversation instead of opening it.
+- The app is a mirror, not an arbitration system. Adding income could shift it toward justification.
+
+That said: it's a genuinely open question. Some couples would want it. A settings toggle — "track financial contributions" — isn't out of bounds. It stays out of scope for now, not because the question is wrong, but because the app works better with a narrow lane.
+
+---
+
 ## Core Mechanics
 
 ### 1. Award Points
@@ -25,25 +47,33 @@ One partner notices something the other did and awards points for it. Spontaneou
 - Category selected from a fixed grid (or freeform)
 - Points awarded: fixed value per category, with sensible defaults — not randomized
 - A quip surfaces on award — dry, specific, not generic
+- **Completes by opening Messages** with a pre-composed text and sync link — there are no private awards. Awarding points without telling your partner is keeping a diary. The mechanic doesn't allow it.
 
 ### 2. Request Points
-A partner flags that they did something and would like acknowledgment. The request surfaces to the other partner for resolution.
+A partner flags that they did something and would like acknowledgment.
 
 - Requester selects themselves as the subject
 - Category + optional note
-- Drops into a **Pending** queue visible to both
-- Other partner resolves: **Award it** or **Pass**
+- **Completes by opening Messages** with a pre-composed text and sync link — the request IS the message. A request that doesn't reach your partner didn't happen.
 
-Award: points scored, entry in ledger tagged `requested`  
-Pass: entry in ledger tagged `passed`, greyed out — filed quietly
+Partner receives the link, taps it, sees the pending request surfaced on open.
+
+**Award it:** points scored, entry in ledger tagged `requested`, celebration text auto-sends back to requester with updated sync link. Requester taps it, score updates. Two taps total after the initial request.
+
+**Pass:** silence. Partner dismisses the request locally — no return message, no ledger entry, no taps required from the requester. Not responding to a text IS passing. The app doesn't need to formalize what silence already communicates.
+
+The requester reads the silence. That's appropriate.
+
+**On self-award:** trying to award yourself requires texting yourself. The mechanic makes this immediately absurd and self-defeating. No explicit rule needed — the flow enforces it.
 
 ### 3. The Ledger
-Running history of all activity. Three entry types:
+Running history of all activity. Two entry types in the URL model:
 - Spontaneous award (no tag)
 - Requested + awarded (`requested`)
-- Requested + passed (`passed`)
 
-The ratio between these over time is the real signal. A ledger heavy with `passed` entries tells you something the scoreboard doesn't.
+Passed requests generate no ledger entry in the URL model — pass is silence, not a recorded event. The shared-device v1 retains a `passed` entry since resolution happens in-person, but it should be considered a prototype artifact rather than a permanent feature.
+
+The ratio of spontaneous to requested awards over time is the real signal.
 
 ---
 
@@ -90,13 +120,56 @@ An optional multiplier at time of award handles the "I did them without being as
 
 Both the default values and the multiplier options are adjustable in Settings.
 
-### Pairing
-Two partners share a single ledger. Connection flow:
-1. One partner opens the app, generates a 6-character invite code
-2. Text it to the other partner
-3. They enter the code — linked
+### Persistence & Device Model
 
-No email required. No accounts in the friction-heavy sense. The code is the handshake.
+**V1: Shared device**
+
+One phone, passed back and forth. State lives in localStorage. Both partners use the same browser session. No sync required because there is only one copy of the state. The shared device moment is itself a small act of togetherness — appropriate for what the app is.
+
+**V2: Text message thread as sync**
+
+No backend. No database. The URL is the data.
+
+Every action that changes state — award or request — completes by opening the native Messages app with a pre-composed text to the partner. The text contains a sync link:
+
+```
+"You get points for this 🍽️ [link]"
+"I did the dishes 👀 [link]"
+```
+
+The link encodes the sync packet as a hash fragment:
+
+```
+https://mrallatta.github.io/spouse-points/#state=eyJzY29yZXMi...
+```
+
+The `#` (fragment) is never sent to the server. GitHub Pages serves the HTML; it never sees the state. The state is base64-encoded JSON, decoded client-side on tap.
+
+**What's in the sync packet** (scores and pending only — not full history):
+
+```json
+{
+  "v": 1,
+  "scores": { "a": 15, "b": 23 },
+  "names": { "a": "Eric", "b": "Jill" },
+  "pending": [ { ... } ],
+  "ts": 1712789234
+}
+```
+
+History stays on-device and is never transmitted. It's a private local archive.
+
+**On tap:** app reads the fragment, merges into localStorage (URL scores and pending win, local history is preserved), clears the hash. localStorage takes over from that point.
+
+**The text thread is the commit log.** Each link encodes the state at that moment. Scroll back through the thread and you can see the ledger's history. This is a little beautiful and also ridiculous, which is right.
+
+**URL length:** ~600 characters with a typical pending queue. iMessage renders it as a preview card, not a wall of text.
+
+**V2.5: PWA (installed software)**
+
+Add a service worker and manifest to the existing project. Partners tap "Add to Home Screen" once. After that it launches from an icon, runs without browser chrome, loads instantly, works offline. The URL-as-sync mechanism is identical. "Installed software with text as sync" is a PWA — roughly two hours of additional work on top of what exists.
+
+**No notifications needed.** The text message is the notification. The quip in the pre-composed text is the push notification body. No server required.
 
 ### Settings Page
 A shared settings screen accessible to both partners. Covers:
@@ -105,23 +178,20 @@ A shared settings screen accessible to both partners. Covers:
 - **Category point values** — adjust defaults per category; changes apply going forward, not retroactively
 - **Decay half-lives** — per category, if decay is enabled
 - **Decay on/off toggle** — the feature should be opt-in; not every couple will want it
-- **Reset ledger** — wipe history and scores; requires confirmation from both partners (or a deliberate double-tap)
-- **Pairing** — invite code to connect a second device; disconnect option
+- **Reset ledger** — wipe history and scores; requires confirmation (deliberate double-tap)
 
 Settings should be mundane-looking on purpose. The emotional texture of the app lives in the award/request flow, not in configuration.
-
-### Notifications
-Push notification when your partner awards you points. The quip is the notification body.
-
-Possible: a gentle nudge after N days with no activity. ("The ledger is quiet. Someone must have been perfect.")
 
 ### Stack
 | Layer | Choice | Rationale |
 |---|---|---|
-| Frontend | Vanilla JS or lightweight React | Doesn't need much |
-| Backend | Supabase | Free tier, Postgres, real-time, auth built in |
+| Frontend | Vanilla JS | Doesn't need more |
+| Persistence | localStorage + URL hash fragment | No backend required |
+| Sync | Native Messages (SMS/iMessage) | Text IS the notification |
+| Install | PWA + service worker | Home screen icon, offline support |
+| Hosting | GitHub Pages | Already there |
 | Decay calc | Read-time, client-side | No cron jobs needed |
-| Notifications | Supabase Edge Functions → push | Simple path |
+| Backend | None | By design |
 
 ---
 
@@ -139,23 +209,13 @@ Current implementation: same value. Worth revisiting after real use.
 
 **2. Does the requester see when their request is passed?**
 
-Right now: passed requests appear in the ledger visible to both. That's honest but potentially punishing.
-
-Alternative: passed requests are only visible to the requester (private passed count). The awarder just sees the request disappear.
-
-The tension: visibility might create accountability. Invisibility might prevent score-keeping resentment about score-keeping.
+~~Resolved.~~ In the URL model, pass is silence — no message, no ledger entry. The question of how to surface or label a pass dissolves because a pass is never formally recorded. The requester either gets a celebration text or they don't. Silence is the answer.
 
 ---
 
 **3. Can you award points to yourself?**
 
-Current mock: the recipient toggle allows any combination — either partner can award either partner, including themselves.
-
-Argument for blocking self-award: the core gesture is one person *noticing* another. Self-reporting breaks that.
-
-Argument for allowing it: in a real two-device scenario, you'd log your own actions before handing the phone over. The "noticing" moment is still the partner's resolution.
-
-Likely resolution: in the single-device mock, allow it. In the real paired app, block direct self-award — use Request instead.
+~~Resolved.~~ The text-as-sync mechanic handles this without a rule. Awarding yourself requires texting yourself. That's immediately absurd. Use Request instead — which also requires texting your partner, which is the point.
 
 ---
 
@@ -198,9 +258,9 @@ What it does not yet capture:
 - Award multiplier (1× / 2× / 3×)
 - Decay
 - Settings page
-- Two-device pairing
-- Notifications
-- Any backend
+- URL-as-state sync packet (hash fragment encoding/decoding)
+- Messages handoff on award and request completion
+- PWA manifest + service worker (installable)
 
 The mock is the right fidelity for now. It's enough to show someone and have a real conversation about whether it works.
 
