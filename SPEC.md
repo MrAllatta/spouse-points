@@ -1,6 +1,6 @@
 # Spouse Points — Build Spec
 
-A shared scoreboard for couples that makes domestic labor and emotional effort visible, named, and credited. Not a task manager. Not a chore chart. A mirror.
+A **mirror** for two people: domestic labor and emotional effort made visible, named, and credited. The **scoreboard** metaphor is the easy vocabulary (and early UI uses numeric totals as **shipping scaffolding**), but the thesis is *did you notice?* — not *who is ahead?* Not a task manager. Not a chore chart.
 
 > "A little scoreboard helps us laugh while we learn to notice each other."
 
@@ -20,7 +20,7 @@ The categories that matter most here aren't chores. "Didn't sigh." "Held tongue.
 
 The categories in this app are, if you look at them honestly, coded as women's work. Dishes. Cooking. Cleaning. Kid duty. This is not an accident and it's not a blind spot — it's the origin story. The app emerged from a specific household dynamic, and the humor lands because it names something a lot of couples recognize in themselves: an unspoken imbalance in who does what, and who notices.
 
-We don't claim to go deeper than that. This is not a labor equity framework. It's not Fair Play. It's a scoreboard with good jokes.
+We don't claim to go deeper than that. This is not a labor equity framework. It's not Fair Play. It's a mirror with good jokes; "scoreboard" is the accessible hook, not the moral center (see **Scoreboard numbers vs. what “points” really are** below).
 
 **On gender:** the app is agnostic. The imbalance it reflects is traditional, but who holds which side of it varies. If the joke landed for you, you recognized your household in it. That's the whole thing. We make no assumptions about which partner is which.
 
@@ -245,7 +245,7 @@ Still: **v1 and v2 may need to stay numeric** so the loop ships — sync, ledger
 
 **1,000,000 for birth** works because the number is **obviously a joke**, not a fungible score — it breaks the “we’re seriously counting” frame. That suggests a design pattern: when numbers stay, **let some of them be absurd or non-comparable** so the UI can signal “this category is not in the same game as coffee.” Early versions might lean on **scale discontinuity and humor** until a richer non-numeric or decay-forward presentation is worth the build.
 
-**Unresolved:** whether future versions **remove or hide running totals**, replace them with **recency / recognition feeds**, or keep totals but **treat them as vestigial** (always secondary to ledger stories and messages). Worth revisiting after the shareable text loop has real mileage.
+**Working stance for implementation:** ship numeric totals while **refusing to let them become the thesis** — hierarchy and copy favor **ledger lines + Messages** over headline “who won”; use **absurd or non-comparable values** where they signal “not the same game as coffee.” **Unresolved** long-term: remove or hide running totals, recency / recognition-first UI, or totals as vestigial. Revisit after the shareable text loop has real mileage (see Open Design Question **7**).
 
 ---
 

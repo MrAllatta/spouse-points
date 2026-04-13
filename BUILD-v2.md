@@ -4,6 +4,8 @@
 **Target:** Shippable by end of weekend, postable Monday.  
 **Constraint:** Single HTML file preferred. No build tooling, no npm, no framework.
 
+**Product stance (do not skip when implementing):** Numeric scores and `pointValues` exist for **sync and clarity**, not to crown a winner. Prefer **ledger + message body** as the emotional surface; avoid adding extra number chrome without cause. **Absurd or non-comparable values** (e.g. birth) are intentional — they break fungible “we’re seriously counting” energy. Full debate and open questions: `SPEC.md` (*Debate: Scoreboard numbers…*, *Seasonal labor…*, Open Question **7**).
+
 ---
 
 ## What V1 Already Has

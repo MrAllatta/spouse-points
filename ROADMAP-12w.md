@@ -61,6 +61,9 @@
 - **Niche seeding (low effort):** When something ships, **one** non-spammy note in a community that fits (parent humor, teachers, adulting corners) — not every week; **weeks 3, 6, 9, 12** are enough if you dislike this.
 - **Scope guard:** No decay, no backend, no accounts in this block — matches `BUILD-v2` out-of-scope list.
 - **Tooling / tokens:** Time-box builds to **2–3 focused blocks per week**; reserve stronger models for **copy** on anchor weeks **3, 6, 9, 12** if you want prose to travel.
+- **Mirror over race:** In UI and SMS copy, treat **running totals as secondary** to the gesture (category, quip, ledger line). Numbers stay for sync and legibility early on; they should not train “who has more” as the emotional headline — see `SPEC.md` (*Debate: Scoreboard numbers…*, Open Question **7**).
+- **Defaults are editable caricature:** Category grid and calendar-flavored examples are **starting stereotypes the couple rewrites** (settings, custom lines); seasonal / cultural stance lives in `SPEC.md` (*Seasonal labor, default spaces…*).
+- **After real thread mileage:** Revisit whether headline totals still belong once weeks **3–6** have been lived with on phones, not only in theory.
 
 ---
 
