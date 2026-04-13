@@ -1016,7 +1016,6 @@
     };
 
     let state = {
-      recipient: "a",
       selectedCategory: null,
       mode: "award",
       multiplier: 1,
@@ -1262,6 +1261,18 @@
       syncNames();
     }
 
+    function updateRoleHint() {
+      const el = document.getElementById("role-hint");
+      if (!el) return;
+      const me = (document.getElementById("name-a").value || "").trim() || "you";
+      const spouse = (document.getElementById("name-b").value || "").trim() || "your spouse";
+      if (state.mode === "award") {
+        el.textContent = `You’re on this phone as ${me}. Awards always go to ${spouse}.`;
+      } else {
+        el.textContent = `You’re on this phone as ${me}. Requests are for you; ${spouse} sees them when they open your link.`;
+      }
+    }
+
     function syncNames() {
       const a = document.getElementById("name-a").value || "Partner A";
       const b = document.getElementById("name-b").value || "Partner B";
@@ -1269,8 +1280,7 @@
       const dispB = document.getElementById("display-name-b");
       if (dispA) dispA.textContent = a;
       if (dispB) dispB.textContent = b;
-      document.getElementById("toggle-label-a").textContent = a;
-      document.getElementById("toggle-label-b").textContent = b;
+      updateRoleHint();
       saveState();
     }
 
@@ -1284,12 +1294,7 @@
       btn.textContent = mode === "award" ? "Award Points" : "Request Points";
       btn.className = mode === "award" ? "award-btn" : "request-submit";
       document.getElementById("multiplier-row").style.display = mode === "award" ? "flex" : "none";
-    }
-
-    function setRecipient(who) {
-      state.recipient = who;
-      document.getElementById("toggle-a").className = who === "a" ? "active" : "";
-      document.getElementById("toggle-b").className = who === "b" ? "active" : "";
+      updateRoleHint();
     }
 
     function setMultiplier(n) {
@@ -1332,14 +1337,15 @@
       const pool = quips[key] || quips.custom;
       const quip = pool[Math.floor(Math.random() * pool.length)];
 
-      const nameEl = document.getElementById(`name-${state.recipient}`);
-      const recipientName = nameEl.value || (state.recipient === "a" ? "Partner A" : "Partner B");
+      const recipient = "b";
+      const nameEl = document.getElementById(`name-${recipient}`);
+      const recipientName = nameEl.value || "Partner B";
       const categoryLabel = cat ? categoryLabelForKey(cat) || "Custom" : "Custom";
       const detail = custom || undefined;
       const whatNoticed = ledgerWhatLine({ category: categoryLabel, detail });
 
-      state.scores[state.recipient] += points;
-      document.getElementById(`score-${state.recipient}`).textContent = state.scores[state.recipient];
+      state.scores[recipient] += points;
+      document.getElementById(`score-${recipient}`).textContent = state.scores[recipient];
 
       const entry = {
         id: Date.now(),
@@ -1364,14 +1370,15 @@
       const cat = state.selectedCategory;
       if (!cat && !custom) return;
 
-      const nameEl = document.getElementById(`name-${state.recipient}`);
-      const requesterName = nameEl.value || (state.recipient === "a" ? "Partner A" : "Partner B");
+      const requester = "a";
+      const nameEl = document.getElementById(`name-${requester}`);
+      const requesterName = nameEl.value || "Partner A";
       const label = custom || (cat ? categoryLabelForKey(cat) || "" : "");
       const quip = requestQuips[Math.floor(Math.random() * requestQuips.length)];
 
       const request = {
         id: Date.now(),
-        requester: state.recipient,
+        requester: requester,
         requesterName: requesterName,
         category: cat,
         label: label,
@@ -1616,14 +1623,49 @@
       return `${location.origin}${location.pathname}#state=${encoded}`;
     }
 
+    function normNamePart(s) {
+      return String(s || "").trim().toLowerCase();
+    }
+
+    /** Each install keeps A = this phone’s user and B = spouse; the sender’s packet may use the same or flipped A/B. */
+    function incomingRolesAreOppositeLocal(packet) {
+      const pn = packet.names;
+      if (!pn || typeof pn !== "object") return false;
+      const pa = normNamePart(pn.a);
+      const pb = normNamePart(pn.b);
+      const la = normNamePart(document.getElementById("name-a").value);
+      const lb = normNamePart(document.getElementById("name-b").value);
+      if (!pa || !la || !lb) return false;
+      if (pa === la && pb === lb) return false;
+      if (pa === lb && pb === la) return true;
+      if (pa === lb) return true;
+      return false;
+    }
+
+    function flipScoreSides(scores) {
+      if (!scores || typeof scores !== "object") return scores;
+      return { a: scores.b, b: scores.a };
+    }
+
+    function flipPendingRequestSides(pending) {
+      if (!Array.isArray(pending)) return [];
+      return pending.map((r) => ({
+        ...r,
+        requester: r.requester === "a" ? "b" : r.requester === "b" ? "a" : r.requester,
+      }));
+    }
+
     function applyPacket(packet) {
       if (!packet || packet.v !== 1) return;
-      state.scores = packet.scores;
-      state.pending = packet.pending || [];
-      if (packet.names) {
-        document.getElementById("name-a").value = packet.names.a || "PARTNER A";
-        document.getElementById("name-b").value = packet.names.b || "PARTNER B";
+      let scores = packet.scores;
+      let pending = packet.pending || [];
+      const swap = incomingRolesAreOppositeLocal(packet);
+      if (swap) {
+        scores = flipScoreSides(scores);
+        pending = flipPendingRequestSides(pending);
       }
+      state.scores = scores;
+      state.pending = pending;
       document.getElementById("score-a").textContent = state.scores.a;
       document.getElementById("score-b").textContent = state.scores.b;
       syncNames();

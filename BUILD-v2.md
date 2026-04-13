@@ -6,6 +6,8 @@
 
 **Product stance (do not skip when implementing):** Numeric scores and `pointValues` exist for **sync and clarity**, not to crown a winner. Prefer **ledger + message body** as the emotional surface; avoid adding extra number chrome without cause. **Absurd or non-comparable values** (e.g. birth) are intentional — they break fungible “we’re seriously counting” energy. Full debate and open questions: `SPEC.md` (*Debate: Scoreboard numbers…*, *Seasonal labor…*, Open Question **7**).
 
+**Single-owner install (each PWA):** Partner **A** = the human whose phone it is; Partner **B** = their spouse. **Awards always credit B**; **requests always come from A**. There is **no** main-screen control to impersonate the other partner—you send to them via Messages, they maintain the same two totals on their copy. Settings on each device label A as “you” and B as “your spouse.” When a `#state=` packet arrives, `index.html` may **swap incoming `a`/`b`** for scores and flip `pending[].requester` if the sender’s `names` order is opposite the receiver’s (packet names stay for SMS legibility + orientation; **local name fields are not overwritten** from the link). Full write-up: `SPEC.md` (*Core Mechanics*, *Persistence & Device Model*).
+
 ---
 
 ## What V1 Already Has
@@ -31,7 +33,7 @@
 | 6 | Pass = silent (no ledger / no message) | Shipped |
 | 7 | Award multiplier 1× / 2× / 3× | Shipped |
 | 8 | Settings panel (names + point overrides) | Shipped |
-| 9 | Category CRUD in Settings | Not started |
+| 9 | Category CRUD in Settings | Shipped |
 | 10 | PWA (installable) | Shipped |
 
 ---
@@ -81,12 +83,10 @@ function buildShareURL() {
 
 function applyPacket(packet) {
   if (!packet || packet.v !== 1) return;
+  // Production also swaps a/b for scores + pending when packet.names
+  // disagree with local “A = me, B = spouse” — see index.html / SPEC.md.
   state.scores = packet.scores;
   state.pending = packet.pending || [];
-  if (packet.names) {
-    document.getElementById("name-a").value = packet.names.a || "PARTNER A";
-    document.getElementById("name-b").value = packet.names.b || "PARTNER B";
-  }
   document.getElementById("score-a").textContent = state.scores.a;
   document.getElementById("score-b").textContent = state.scores.b;
   syncNames();
@@ -95,7 +95,7 @@ function applyPacket(packet) {
 }
 ```
 
-`applyPacket` updates **scores, pending, and names** from the URL only; **local ledger (`state.history`) is unchanged** so the device keeps its private archive (`SPEC.md` merge behavior).
+`applyPacket` updates **scores and pending** from the URL; **local ledger (`state.history`) is unchanged** so the device keeps its private archive (`SPEC.md` merge behavior). **Names in Settings stay local** (A = you, B = spouse on this install); the packet’s `names` are used to detect whether incoming `a`/`b` need a **swap** relative to this phone. Production `index.html` implements that swap + pending `requester` flip; the snippet below is the minimal merge — extend per `SPEC.md` *Persistence & Device Model*.
 
 Add to `init()` — check for hash on load, apply and clear:
 ```js
@@ -223,7 +223,7 @@ Hide the multiplier row when in Request mode (multiplier doesn't apply to reques
 A slide-up panel (not a separate page) triggered by a gear icon in the header.
 
 Contents:
-- Partner name fields (move from scorecards — or keep both in sync)
+- Partner name fields: **Partner A = you on this phone**, **Partner B = your spouse** (each install; see *Single-owner install* above). Names are sent in the sync packet but are **not** applied over local fields on link open.
 - Point value overrides: number input per category, pre-filled with defaults
 
 **Do not ship** a user-facing **reset scores** or **wipe ledger** in this panel for v1/v2 (`SPEC.md` *Design choice: In-app reset* and *Settings Page*). Starting over is **OS-level** site-data clear / uninstall — intentional friction.
@@ -333,8 +333,9 @@ if ("serviceWorker" in navigator) {
 - [x] Multiplier doubles/triples point value, resets after award *(implemented; confirm in UI)*
 - [x] Settings: name change persists and syncs to toggle labels *(Step 8)*
 - [x] Settings: custom point value persists and applies to new awards *(Step 8)*
-- [ ] Settings: add / edit / reorder / delete categories; persists across reload *(Step 9)*
-- [ ] New category uses correct points; unknown key on partner device resolves with fallback quips *(Step 9)*
+- [x] Settings: add / edit / reorder / delete categories; persists across reload *(Step 9)*
+- [x] New category uses correct points; unknown key on partner device resolves with fallback quips *(Step 9)*
+- [x] Single-owner flow: no partner switcher; awards to B, requests from A; link apply swaps A/B when sender/receiver slotting differs *(see `SPEC.md`)*
 - [x] No in-app reset to wipe scores/ledger (verify absent in Settings); fresh start only via OS / private window / clear site data*
 - [x] Desktop: SMS handoff degrades gracefully (shows URL in toast) *(implemented; confirm on device)*
 - [x] PWA: installs to home screen on iOS and Android *(Step 10; confirm on device)*
