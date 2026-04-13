@@ -825,23 +825,11 @@
       };
       state.pending.unshift(request);
       renderPending();
-
-      const toast = document.getElementById("toast");
-      document.getElementById("toast-points").textContent = `${requesterName} is requesting credit`;
-      document.getElementById("toast-quip").textContent = `"${label}" — awaiting acknowledgment.`;
-      toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 3500);
-
       clearForm();
       saveState();
 
-      const url = buildShareURL();
-      const isMobile = /iPhone|Android/i.test(navigator.userAgent);
-      if (isMobile) {
-        setTimeout(() => openMessages(`${label} 👀 ${url}`), 450);
-      } else {
-        document.getElementById("toast-quip").textContent = url;
-      }
+      // BUILD-v2 Step 4: request completes via Messages + sync link (same split as award).
+      showRequestToastThenHandoff(requesterName, label);
     }
 
     function resolveRequest(id, action) {
@@ -901,6 +889,22 @@
     function openMessages(precomposedText) {
       const encoded = encodeURIComponent(precomposedText);
       window.location.href = `sms:?body=${encoded}`;
+    }
+
+    function showRequestToastThenHandoff(requesterName, label) {
+      const toast = document.getElementById("toast");
+      document.getElementById("toast-points").textContent = `${requesterName} is requesting credit`;
+      document.getElementById("toast-quip").textContent = `"${label}" — awaiting acknowledgment.`;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 3500);
+
+      const url = buildShareURL();
+      const isMobile = /iPhone|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        setTimeout(() => openMessages(`${label} 👀 ${url}`), 450);
+      } else {
+        document.getElementById("toast-quip").textContent = url;
+      }
     }
 
     function showToastThenSyncMessages(points, quip, recipientName, whatNoticed) {
