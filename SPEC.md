@@ -79,7 +79,7 @@ One partner notices something the other did and awards points for it. Spontaneou
 - Category selected from a fixed grid (or freeform)
 - Points awarded: fixed value per category, with sensible defaults — not randomized
 - A quip surfaces on award — dry, specific, not generic
-- **Completes by opening Messages** with a pre-composed text and sync link — there are no private awards. Awarding points without telling your partner is keeping a diary. The mechanic doesn't allow it.
+- **Completes by opening Messages** with a pre-composed text and sync link — there are no private awards. Awarding points without telling your partner is keeping a diary. The mechanic doesn't allow it. The draft text leads with points, recipient, and **what was noticed** (category and optional detail), then the sync link — not the quip.
 
 ### 2. Request Points
 A partner flags that they did something and would like acknowledgment.
@@ -106,6 +106,8 @@ Running history of all activity. Two entry types in the URL model:
 Passed requests generate no ledger entry in the URL model — pass is silence, not a recorded event. The shared-device v1 retains a `passed` entry since resolution happens in-person, but it should be considered a prototype artifact rather than a permanent feature.
 
 The ratio of spontaneous to requested awards over time is the real signal.
+
+**Ledger vs. quips:** Quips are for the immediate award moment (toast, energy). The ledger row should read as *what was noticed* first — recipient, category (and optional detail), points, and tags — with the quip de-emphasized on a second line when present. The pre-filled outbound message follows the same priority so the text thread stays legible as a record, not a joke log.
 
 ---
 

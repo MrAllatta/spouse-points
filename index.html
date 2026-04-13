@@ -265,16 +265,35 @@
       margin-bottom: 0.4rem;
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+      gap: 0.75rem;
       font-size: 0.9rem;
     }
 
-    .history-entry .entry-text { flex: 1; }
+    .history-entry .entry-block {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .history-entry .entry-notice {
+      line-height: 1.35;
+    }
+
+    .history-entry .entry-quip {
+      margin-top: 0.35rem;
+      font-size: 0.82rem;
+      color: var(--text-light);
+      font-style: italic;
+      line-height: 1.35;
+    }
+
     .history-entry .entry-points {
       color: var(--accent);
       font-weight: 700;
-      margin-left: 1rem;
+      margin-left: 0;
       white-space: nowrap;
+      flex-shrink: 0;
+      padding-top: 0.05rem;
     }
 
     .history-empty {
@@ -372,6 +391,17 @@
       margin-bottom: 0.7rem;
       color: var(--text);
       line-height: 1.4;
+    }
+
+    .pending-entry .pending-label {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .pending-entry .pending-quip {
+      font-size: 0.86rem;
+      color: var(--text-light);
+      font-style: italic;
     }
 
     .resolve-btns { display: flex; gap: 0.5rem; }
@@ -684,6 +714,14 @@
       else requestPoints();
     }
 
+    function ledgerWhatLine(entry) {
+      const cat = entry.category || "";
+      const detail = (entry.detail || "").trim();
+      if (detail && cat && cat !== "Custom") return `${cat} — ${detail}`;
+      if (detail) return detail;
+      return cat || "Notice";
+    }
+
     function awardPoints() {
       const custom = document.getElementById("custom-reason").value.trim();
       const cat = state.selectedCategory;
@@ -696,6 +734,9 @@
 
       const nameEl = document.getElementById(`name-${state.recipient}`);
       const recipientName = nameEl.value || (state.recipient === "a" ? "Partner A" : "Partner B");
+      const categoryLabel = cat ? categories.find((c) => c.key === cat)?.label : "Custom";
+      const detail = custom || undefined;
+      const whatNoticed = ledgerWhatLine({ category: categoryLabel, detail });
 
       state.scores[state.recipient] += points;
       document.getElementById(`score-${state.recipient}`).textContent = state.scores[state.recipient];
@@ -703,7 +744,8 @@
       const entry = {
         id: Date.now(),
         recipient: recipientName,
-        category: cat ? categories.find((c) => c.key === cat)?.label : "Custom",
+        category: categoryLabel,
+        detail: detail,
         quip: quip,
         points: points,
         time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
@@ -712,7 +754,7 @@
       };
       state.history.unshift(entry);
       renderHistory();
-      showToastThenSyncMessages(points, quip, recipientName);
+      showToastThenSyncMessages(points, quip, recipientName, whatNoticed);
       clearForm();
       saveState();
     }
@@ -816,13 +858,14 @@
       window.location.href = `sms:?body=${encoded}`;
     }
 
-    function showToastThenSyncMessages(points, quip, recipientName) {
+    function showToastThenSyncMessages(points, quip, recipientName, whatNoticed) {
       const url = buildShareURL();
       showToast(points, quip, recipientName);
       const isMobile = /iPhone|Android/i.test(navigator.userAgent);
       if (isMobile) {
         setTimeout(() => {
-          openMessages(`+${points} to ${recipientName} 🎉 ${url}`);
+          const notice = whatNoticed ? `${whatNoticed} — ` : "";
+          openMessages(`+${points} to ${recipientName} — ${notice}🎉 ${url}`);
         }, 450);
       } else {
         document.getElementById("toast-quip").textContent = url;
@@ -843,7 +886,10 @@
         .map(
           (r) => `<div class="pending-entry">
             <div class="pending-who">${r.requesterName} &middot; ${r.time}</div>
-            <div class="pending-text">${r.quip}<br><em>${r.label}</em></div>
+            <div class="pending-text">
+              <div class="pending-label">${r.label}</div>
+              <div class="pending-quip">${r.quip}</div>
+            </div>
             <div class="resolve-btns">
               <button class="resolve-btn resolve-award" onclick="resolveRequest(${r.id}, 'award')">Award it</button>
               <button class="resolve-btn resolve-pass" onclick="resolveRequest(${r.id}, 'pass')">Pass</button>
@@ -869,8 +915,16 @@
             ? '<span class="entry-tag">requested</span>'
             : "";
           const pts = e.passed ? "" : `<span class="entry-points">+${e.points}</span>`;
+          const what = ledgerWhatLine(e);
+          const quipLine =
+            !e.passed && e.quip
+              ? `<div class="entry-quip">${e.quip}</div>`
+              : "";
           return `<div class="history-entry${e.passed ? " passed" : ""}">
-            <span class="entry-text"><strong>${e.recipient}</strong>${tag} &middot; ${e.quip}</span>
+            <div class="entry-block">
+              <div class="entry-notice"><strong>${e.recipient}</strong>${tag} &middot; ${what}</div>
+              ${quipLine}
+            </div>
             ${pts}
           </div>`;
         })
