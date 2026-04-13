@@ -19,6 +19,22 @@
 
 ---
 
+## Progress (`index.html` as of 2026-04-13)
+
+| Step | Topic | Status |
+|------|--------|--------|
+| 1 | Fixed `pointValues` | Shipped |
+| 2 | `#state=` encode / decode / strip hash | Shipped |
+| 3 | SMS handoff on spontaneous award | Shipped |
+| 4 | SMS handoff on request | Shipped |
+| 5 | SMS handoff when partner awards pending | Shipped |
+| 6 | Pass = silent (no ledger / no message) | Shipped |
+| 7 | Award multiplier 1× / 2× / 3× | Shipped |
+| 8 | Settings panel | Not started |
+| 9 | PWA | Not started |
+
+---
+
 ## Build Steps
 
 ### Step 1 — Fixed point values per category
@@ -284,18 +300,18 @@ if ("serviceWorker" in navigator) {
 
 ## Testing Checklist
 
-- [ ] Award points → Messages opens with sync link on mobile; SMS body has what was noticed + link, **no quip**
-- [ ] Partner taps link → correct scores and names load → hash clears from URL; local ledger unchanged
-- [ ] Request points → Messages opens with request text and link
-- [ ] Partner taps link → pending request surfaces → Award it → **return** Messages opens with updated sync link (celebration leg)
-- [ ] Pass a request → no message sent, request disappears, no ledger entry
-- [ ] Multiplier doubles/triples point value, resets after award
-- [ ] Settings: name change persists and syncs to toggle labels
-- [ ] Settings: custom point value persists and applies to new awards
-- [ ] No in-app reset to wipe scores/ledger (verify absent); fresh start only via OS / private window / clear site data
-- [ ] Desktop: SMS handoff degrades gracefully (shows URL in toast)
-- [ ] PWA: installs to home screen on iOS and Android
-- [ ] Offline: app loads after install with no network
+- [x] Award points → Messages opens with sync link on mobile; SMS body has what was noticed + link, **no quip** *(implemented; confirm on device)*
+- [x] Partner taps link → correct scores and names load → hash clears from URL; local ledger unchanged *(implemented; confirm on device)*
+- [x] Request points → Messages opens with request text and link *(implemented; confirm on device)*
+- [x] Partner taps link → pending request surfaces → Award it → **return** Messages opens with updated sync link (celebration leg) *(implemented; confirm on device)*
+- [x] Pass a request → no message sent, request disappears, no ledger entry *(implemented; confirm on device)*
+- [x] Multiplier doubles/triples point value, resets after award *(implemented; confirm in UI)*
+- [ ] Settings: name change persists and syncs to toggle labels *(Step 8 not shipped)*
+- [ ] Settings: custom point value persists and applies to new awards *(Step 8 not shipped)*
+- [x] No in-app reset to wipe scores/ledger (verify absent); fresh start only via OS / private window / clear site data *(no settings UI yet — still absent)*
+- [x] Desktop: SMS handoff degrades gracefully (shows URL in toast) *(implemented; confirm on device)*
+- [ ] PWA: installs to home screen on iOS and Android *(Step 9 not shipped)*
+- [ ] Offline: app loads after install with no network *(Step 9 not shipped)*
 
 ---
 
