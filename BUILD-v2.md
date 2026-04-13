@@ -30,8 +30,9 @@
 | 5 | SMS handoff when partner awards pending | Shipped |
 | 6 | Pass = silent (no ledger / no message) | Shipped |
 | 7 | Award multiplier 1× / 2× / 3× | Shipped |
-| 8 | Settings panel | Not started |
-| 9 | PWA | Not started |
+| 8 | Settings panel (names + point overrides) | Shipped |
+| 9 | Category CRUD in Settings | Not started |
+| 10 | PWA (installable) | Not started |
 
 ---
 
@@ -208,7 +209,7 @@ Add a multiplier toggle to the award section UI — three small buttons, default
 </div>
 ```
 
-Add `state.multiplier = 1`. In `awardPoints()`: `const points = pointValues[key] * state.multiplier`.  
+Add `state.multiplier = 1`. In `awardPoints()`: multiply the resolved per-category points by the multiplier, e.g. `const points = pointsForKey(key) * state.multiplier` once Step 8’s `pointsForKey` exists (before that: `pointValues[key] * state.multiplier`).  
 Reset multiplier to 1 after each award in `clearForm()`.
 
 Hide the multiplier row when in Request mode (multiplier doesn't apply to requests).
@@ -244,7 +245,31 @@ Custom point values go into `saveState()` / `loadState()`. They do **not** go in
 
 ---
 
-### Step 9 — PWA (installable)
+### Step 9 — Category CRUD in Settings
+
+**Build order:** **After Step 8**, **before Step 10 (PWA).** Step 8 establishes the settings shell, persistence, and “config stays local” rules; this step extends that surface. PWA does not depend on it, but shipping category editing before install reduces “first open from home screen” friction and keeps one settings pass for QA.
+
+**Goal:** Couples can **add, edit, reorder, and remove** categories from the award/request grid without editing source. Aligns with `SPEC.md` (*Seasonal labor…* / *Politics of defaulting*) — defaults are a starting caricature; the list is **theirs**.
+
+**Data model (suggested):**
+- Keep shipped defaults as **fallback seeds** (e.g. `DEFAULT_CATEGORIES` + `DEFAULT_POINT_VALUES` + default `quips` in code or loaded once).
+- Runtime list: `state.categories` — array of `{ key, emoji, label }` with stable `key` (slug/id) for storage and pending references.
+- `state.customPoints` continues to key off `key`; deleting a category removes its override row; unknown keys in old data fall back safely.
+- **Quips:** Minimum viable: new user-added categories use the **`custom` quip pool** until/unless we add per-category quip editing (defer or scope as “v2.1” if too large). Document in SPEC.
+
+**Settings UI (extend Step 8 panel):**
+- List of categories with: emoji, label, default points (reuse point override or single “points” field per row), drag handle or up/down for **reorder**, **Edit**, **Delete**.
+- **Add category** — generates a unique `key` (e.g. `custom_<timestamp>` or slug from label + collision suffix).
+- **Delete** — if any **pending** request references `key`, block delete with a short message (“Resolve or pass waiting requests first”) *or* allow delete and treat pending rows as legacy `custom` (pick one; blocking is simpler and safer).
+- Ledger history stores human-readable **labels** already; old rows stay readable after rename/delete.
+
+**Sync packet:** Same stance as point overrides — **category catalog is not in `#state=`** (URL size, version churn). Each device owns its grid. **Pending items already carry** `label` (and `category` key); partner awarding uses resolver’s `pointsForKey(key)` and quip fallback (`custom`) if their device has no row for that key. Document in SPEC.
+
+**Done when:** User adds a category with emoji + label + points; it appears in the grid; awards use those points; reorder persists; delete removes from grid (subject to pending rule); reload preserves list.
+
+---
+
+### Step 10 — PWA (installable)
 
 **manifest.json** — create in the same directory as `index.html`:
 ```json
@@ -306,12 +331,14 @@ if ("serviceWorker" in navigator) {
 - [x] Partner taps link → pending request surfaces → Award it → **return** Messages opens with updated sync link (celebration leg) *(implemented; confirm on device)*
 - [x] Pass a request → no message sent, request disappears, no ledger entry *(implemented; confirm on device)*
 - [x] Multiplier doubles/triples point value, resets after award *(implemented; confirm in UI)*
-- [ ] Settings: name change persists and syncs to toggle labels *(Step 8 not shipped)*
-- [ ] Settings: custom point value persists and applies to new awards *(Step 8 not shipped)*
-- [x] No in-app reset to wipe scores/ledger (verify absent); fresh start only via OS / private window / clear site data *(no settings UI yet — still absent)*
+- [x] Settings: name change persists and syncs to toggle labels *(Step 8)*
+- [x] Settings: custom point value persists and applies to new awards *(Step 8)*
+- [ ] Settings: add / edit / reorder / delete categories; persists across reload *(Step 9)*
+- [ ] New category uses correct points; unknown key on partner device resolves with fallback quips *(Step 9)*
+- [x] No in-app reset to wipe scores/ledger (verify absent in Settings); fresh start only via OS / private window / clear site data*
 - [x] Desktop: SMS handoff degrades gracefully (shows URL in toast) *(implemented; confirm on device)*
-- [ ] PWA: installs to home screen on iOS and Android *(Step 9 not shipped)*
-- [ ] Offline: app loads after install with no network *(Step 9 not shipped)*
+- [ ] PWA: installs to home screen on iOS and Android *(Step 10)*
+- [ ] Offline: app loads after install with no network *(Step 10)*
 
 ---
 

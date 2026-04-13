@@ -619,6 +619,137 @@
       border-color: var(--accent);
     }
 
+    .settings-add-cat {
+      width: 100%;
+      margin: 0.5rem 0 0.75rem;
+      padding: 0.65rem;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .settings-add-cat:hover {
+      background: #fef6f3;
+      border-color: var(--accent);
+    }
+
+    .settings-cat-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-cat-row:last-of-type {
+      border-bottom: none;
+    }
+
+    .settings-cat-emoji {
+      width: 3.25rem;
+      flex-shrink: 0;
+      padding: 0.45rem 0.35rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 1rem;
+      text-align: center;
+      outline: none;
+    }
+
+    .settings-cat-emoji:focus {
+      border-color: var(--accent);
+    }
+
+    .settings-cat-label {
+      flex: 1 1 140px;
+      min-width: 0;
+      padding: 0.45rem 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      outline: none;
+    }
+
+    .settings-cat-label:focus {
+      border-color: var(--accent);
+    }
+
+    .settings-cat-points {
+      width: 4.25rem;
+      flex-shrink: 0;
+      padding: 0.45rem 0.4rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      text-align: right;
+      outline: none;
+    }
+
+    .settings-cat-points:focus {
+      border-color: var(--accent);
+    }
+
+    .settings-cat-btns {
+      display: flex;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+
+    .settings-cat-iconbtn {
+      width: 2rem;
+      height: 2rem;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      font-family: inherit;
+      font-size: 0.75rem;
+      line-height: 1;
+      cursor: pointer;
+      color: var(--text-light);
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    .settings-cat-iconbtn:hover:not(:disabled) {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .settings-cat-iconbtn:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .settings-cat-del {
+      border-color: #e8d4d0;
+      color: var(--accent);
+    }
+
+    .settings-cat-del:hover:not(:disabled) {
+      background: #fef6f3;
+      border-color: var(--accent);
+    }
+
+    .settings-custom-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0 0;
+      margin-top: 0.35rem;
+      border-top: 1px solid var(--border);
+    }
+
     .settings-done {
       width: 100%;
       margin-top: 1.35rem;
@@ -752,8 +883,17 @@
       </div>
     </div>
 
-    <div class="settings-section-title">Points per category</div>
-    <div id="settings-points-grid"></div>
+    <div class="settings-section-title">Categories</div>
+    <p class="settings-hint" style="margin-top:-0.35rem;margin-bottom:0.65rem">
+      Reorder, edit, or add rows. New categories use the same playful quips as “Custom” until we add per-category lines. Freeform awards still use the custom base points below.
+    </p>
+    <button type="button" class="settings-add-cat" onclick="addUserCategory()">+ Add category</button>
+    <div id="settings-categories-editor"></div>
+    <div class="settings-custom-row">
+      <span class="settings-point-label">✨ Custom / other (no grid button)</span>
+      <input type="number" class="settings-point-input" min="0" max="999999999" step="1"
+             id="settings-custom-points-input" onchange="onCustomPointChange(this)" data-key="custom" />
+    </div>
 
     <button type="button" class="settings-done" onclick="closeSettings()">Done</button>
   </div>
@@ -765,7 +905,7 @@
 
   <script>
     // Editorial source of truth for quips: quips.yaml (sync before deploy).
-    const categories = [
+    const DEFAULT_CATEGORIES = [
       { emoji: "🍳", label: "Cooked", key: "cooked" },
       { emoji: "🧹", label: "Cleaned", key: "cleaned" },
       { emoji: "🧒", label: "Kid duty", key: "kids" },
@@ -901,26 +1041,184 @@
       history: [],
       pending: [],
       customPoints: {},
+      categories: [],
     };
+
+    function cloneDefaultCategories() {
+      return DEFAULT_CATEGORIES.map((c) => ({ ...c }));
+    }
+
+    function categoryLabelForKey(key) {
+      const row = state.categories.find((c) => c.key === key);
+      return row ? row.label : null;
+    }
+
+    function pendingReferencesCategoryKey(key) {
+      return state.pending.some((r) => r.category === key);
+    }
 
     function pointsForKey(key) {
       return state.customPoints[key] ?? pointValues[key] ?? 2;
     }
 
-    function init() {
+    function defaultPointsForCategoryKey(key) {
+      return pointValues[key] ?? 2;
+    }
+
+    function syncCustomPointsInputFromState() {
+      const el = document.getElementById("settings-custom-points-input");
+      if (!el) return;
+      const def = defaultPointsForCategoryKey("custom");
+      el.value = pointsForKey("custom");
+      el.placeholder = String(def);
+    }
+
+    function renderCategoryButtons() {
       const grid = document.getElementById("categories");
-      categories.forEach((cat) => {
+      if (!grid) return;
+      grid.innerHTML = "";
+      state.categories.forEach((cat) => {
         const btn = document.createElement("button");
+        btn.type = "button";
         btn.className = "category-btn";
         btn.textContent = `${cat.emoji} ${cat.label}`;
-        btn.onclick = () => selectCategory(cat.key, btn);
         btn.dataset.key = cat.key;
+        btn.onclick = () => selectCategory(cat.key, btn);
+        if (state.selectedCategory === cat.key) btn.classList.add("selected");
         grid.appendChild(btn);
       });
+    }
 
+    function renderSettingsCategoryEditor() {
+      const host = document.getElementById("settings-categories-editor");
+      if (!host) return;
+      const n = state.categories.length;
+      host.innerHTML = state.categories
+        .map((c, i) => {
+          const val = pointsForKey(c.key);
+          const emoji = escapeAttr(c.emoji || "");
+          const label = escapeAttr(c.label || "");
+          const key = escapeAttr(c.key);
+          return `<div class="settings-cat-row" data-idx="${i}">
+            <input class="settings-cat-emoji" maxlength="8" data-field="emoji" data-idx="${i}" value="${emoji}" />
+            <input class="settings-cat-label" maxlength="80" data-field="label" data-idx="${i}" value="${label}" placeholder="Label" />
+            <input type="number" class="settings-cat-points" min="0" max="999999999" step="1" data-field="points" data-key="${key}" data-idx="${i}" value="${val}" />
+            <div class="settings-cat-btns">
+              <button type="button" class="settings-cat-iconbtn" data-act="up" data-idx="${i}" ${i === 0 ? "disabled" : ""} title="Move up">↑</button>
+              <button type="button" class="settings-cat-iconbtn" data-act="down" data-idx="${i}" ${i === n - 1 ? "disabled" : ""} title="Move down">↓</button>
+              <button type="button" class="settings-cat-iconbtn settings-cat-del" data-act="del" data-idx="${i}" title="Remove">✕</button>
+            </div>
+          </div>`;
+        })
+        .join("");
+
+      host.querySelectorAll(".settings-cat-emoji, .settings-cat-label").forEach((inp) => {
+        inp.addEventListener("blur", onCategoryTextBlur);
+      });
+      host.querySelectorAll(".settings-cat-points").forEach((inp) => {
+        inp.addEventListener("change", onCategoryPointsChange);
+      });
+      host.querySelectorAll("button[data-act]").forEach((btn) => {
+        btn.addEventListener("click", onCategoryRowButtonClick);
+      });
+    }
+
+    function escapeAttr(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function onCategoryTextBlur(e) {
+      const inp = e.target;
+      const i = Number(inp.dataset.idx);
+      const field = inp.dataset.field;
+      if (Number.isNaN(i) || !state.categories[i]) return;
+      if (field === "emoji") state.categories[i].emoji = inp.value.trim() || "✨";
+      if (field === "label") state.categories[i].label = inp.value.trim() || "Category";
+      saveState();
+      renderCategoryButtons();
+    }
+
+    function onCategoryPointsChange(e) {
+      const inp = e.target;
+      const key = inp.dataset.key;
+      if (!key) return;
+      const def = defaultPointsForCategoryKey(key);
+      const raw = String(inp.value).trim();
+      let n = parseInt(raw, 10);
+      if (raw === "" || Number.isNaN(n)) {
+        delete state.customPoints[key];
+        inp.value = def;
+        saveState();
+        renderCategoryButtons();
+        return;
+      }
+      n = Math.max(0, Math.min(999999999, n));
+      if (n === def) delete state.customPoints[key];
+      else state.customPoints[key] = n;
+      inp.value = n;
+      saveState();
+      renderCategoryButtons();
+    }
+
+    function onCategoryRowButtonClick(e) {
+      const btn = e.currentTarget;
+      const act = btn.dataset.act;
+      const i = Number(btn.dataset.idx);
+      if (act === "up") moveCategory(i, -1);
+      else if (act === "down") moveCategory(i, 1);
+      else if (act === "del") deleteCategoryAt(i);
+    }
+
+    function moveCategory(index, delta) {
+      const j = index + delta;
+      if (j < 0 || j >= state.categories.length) return;
+      const row = state.categories.splice(index, 1)[0];
+      state.categories.splice(j, 0, row);
+      saveState();
+      renderCategoryButtons();
+      renderSettingsCategoryEditor();
+      syncCustomPointsInputFromState();
+    }
+
+    function deleteCategoryAt(index) {
+      const row = state.categories[index];
+      if (!row) return;
+      if (pendingReferencesCategoryKey(row.key)) {
+        alert("Resolve or pass waiting requests that use this category first.");
+        return;
+      }
+      state.categories.splice(index, 1);
+      delete state.customPoints[row.key];
+      if (state.selectedCategory === row.key) {
+        state.selectedCategory = null;
+        document.querySelectorAll(".category-btn").forEach((b) => b.classList.remove("selected"));
+      }
+      saveState();
+      renderCategoryButtons();
+      renderSettingsCategoryEditor();
+      syncCustomPointsInputFromState();
+    }
+
+    function addUserCategory() {
+      let key = `custom_${Date.now()}`;
+      while (state.categories.some((c) => c.key === key)) key = `custom_${Date.now()}_${Math.floor(Math.random() * 999)}`;
+      state.categories.push({ key, emoji: "✨", label: "New category" });
+      saveState();
+      renderCategoryButtons();
+      renderSettingsCategoryEditor();
+      syncCustomPointsInputFromState();
+    }
+
+    function init() {
       loadState();
       checkHashState();
-      renderSettingsPointInputs();
+      renderCategoryButtons();
+      renderSettingsCategoryEditor();
+      syncCustomPointsInputFromState();
       syncNames();
 
       document.getElementById("name-a").addEventListener("input", syncNames);
@@ -933,28 +1231,10 @@
       });
     }
 
-    function renderSettingsPointInputs() {
-      const grid = document.getElementById("settings-points-grid");
-      if (!grid) return;
-      const rows = categories.concat([{ emoji: "✨", label: "Custom / other", key: "custom" }]);
-      grid.innerHTML = rows
-        .map((c) => {
-          const def = pointValues[c.key] ?? 2;
-          const val = pointsForKey(c.key);
-          const label = `${c.emoji} ${c.label}`;
-          return `<div class="settings-point-row">
-            <span class="settings-point-label">${label}</span>
-            <input type="number" class="settings-point-input" min="0" max="999999999" step="1"
-                   data-key="${c.key}" value="${val}" onchange="onCustomPointChange(this)" />
-          </div>`;
-        })
-        .join("");
-    }
-
     function onCustomPointChange(el) {
       const key = el.dataset.key;
       if (!key) return;
-      const def = pointValues[key] ?? 2;
+      const def = defaultPointsForCategoryKey(key);
       const raw = String(el.value).trim();
       let n = parseInt(raw, 10);
       if (raw === "" || Number.isNaN(n)) {
@@ -971,12 +1251,29 @@
     }
 
     function openSettings() {
-      renderSettingsPointInputs();
+      renderSettingsCategoryEditor();
+      syncCustomPointsInputFromState();
       document.getElementById("settings-backdrop").classList.add("open");
       document.getElementById("settings-panel").classList.add("open");
     }
 
+    function flushCategoryInputsFromDom() {
+      const host = document.getElementById("settings-categories-editor");
+      if (!host) return;
+      host.querySelectorAll(".settings-cat-emoji").forEach((inp) => {
+        const i = Number(inp.dataset.idx);
+        if (!Number.isNaN(i) && state.categories[i]) state.categories[i].emoji = inp.value.trim() || "✨";
+      });
+      host.querySelectorAll(".settings-cat-label").forEach((inp) => {
+        const i = Number(inp.dataset.idx);
+        if (!Number.isNaN(i) && state.categories[i]) state.categories[i].label = inp.value.trim() || "Category";
+      });
+    }
+
     function closeSettings() {
+      flushCategoryInputsFromDom();
+      saveState();
+      renderCategoryButtons();
       document.getElementById("settings-backdrop").classList.remove("open");
       document.getElementById("settings-panel").classList.remove("open");
       syncNames();
@@ -1049,12 +1346,12 @@
 
       const key = cat || "custom";
       const points = pointsForKey(key) * state.multiplier;
-      const pool = quips[key];
+      const pool = quips[key] || quips.custom;
       const quip = pool[Math.floor(Math.random() * pool.length)];
 
       const nameEl = document.getElementById(`name-${state.recipient}`);
       const recipientName = nameEl.value || (state.recipient === "a" ? "Partner A" : "Partner B");
-      const categoryLabel = cat ? categories.find((c) => c.key === cat)?.label : "Custom";
+      const categoryLabel = cat ? categoryLabelForKey(cat) || "Custom" : "Custom";
       const detail = custom || undefined;
       const whatNoticed = ledgerWhatLine({ category: categoryLabel, detail });
 
@@ -1086,7 +1383,7 @@
 
       const nameEl = document.getElementById(`name-${state.recipient}`);
       const requesterName = nameEl.value || (state.recipient === "a" ? "Partner A" : "Partner B");
-      const label = custom || (cat ? categories.find((c) => c.key === cat)?.label : "");
+      const label = custom || (cat ? categoryLabelForKey(cat) || "" : "");
       const quip = requestQuips[Math.floor(Math.random() * requestQuips.length)];
 
       const request = {
@@ -1262,6 +1559,7 @@
         history: state.history,
         pending: state.pending,
         customPoints: state.customPoints,
+        categories: state.categories,
         names: {
           a: document.getElementById("name-a").value,
           b: document.getElementById("name-b").value,
@@ -1273,8 +1571,24 @@
     function loadState() {
       try {
         const raw = localStorage.getItem("spouse-points");
-        if (!raw) return;
+        if (!raw) {
+          state.categories = cloneDefaultCategories();
+          return;
+        }
         const data = JSON.parse(raw);
+        const cats = data.categories;
+        if (Array.isArray(cats) && cats.length) {
+          const parsed = cats
+            .filter((c) => c && typeof c.key === "string" && c.key.length)
+            .map((c) => ({
+              key: c.key,
+              emoji: typeof c.emoji === "string" ? c.emoji : "✨",
+              label: typeof c.label === "string" ? c.label : "Category",
+            }));
+          state.categories = parsed.length ? parsed : cloneDefaultCategories();
+        } else {
+          state.categories = cloneDefaultCategories();
+        }
         const cp = data.customPoints;
         if (cp && typeof cp === "object" && !Array.isArray(cp)) {
           state.customPoints = cp;
@@ -1296,7 +1610,9 @@
           state.pending = data.pending;
           renderPending();
         }
-      } catch (e) {}
+      } catch (e) {
+        if (!state.categories || !state.categories.length) state.categories = cloneDefaultCategories();
+      }
     }
 
     function buildSyncPacket() {

@@ -76,8 +76,8 @@ The mechanic travels; the **quips and categories do not** auto-travel by swappin
 One partner notices something the other did and awards points for it. Spontaneous noticing is the primary gesture the app is designed to encourage.
 
 - Recipient is the partner who did the thing
-- Category selected from a fixed grid (or freeform)
-- Points awarded: fixed value per category, with sensible defaults — not randomized
+- Category selected from a **fixed default grid** in the current mock (same caricature list for everyone); **per-category point values** are editable in Settings. **Row-level category CRUD** (add / rename / reorder / delete categories) is planned (`BUILD-v2.md` Step 9), not yet in `index.html`. Freeform detail remains available via the custom line + category choice.
+- Points awarded: fixed value per category (with optional local overrides), sensible defaults — not randomized
 - A quip surfaces on award — dry, specific, not generic
 - **Completes by opening Messages** with a pre-composed text and sync link — there are no private awards. Awarding points without telling your partner is keeping a diary. The mechanic doesn't allow it. The draft text leads with points, recipient, and **what was noticed** (category and optional detail), then the sync link — not the quip.
 
@@ -166,7 +166,7 @@ Default values (illustrative):
 
 An optional multiplier at time of award handles the "I did them without being asked for the third week running — that felt like more" case. Simple: 1× / 2× / 3×. Not a slider.
 
-Both the default values and the multiplier options are adjustable in Settings.
+Both the default values and the multiplier options are adjustable in Settings. The **category list itself** (rows in the grid) is also editable there once category CRUD ships (`BUILD-v2.md` Step 9).
 
 ### Persistence & Device Model
 
@@ -207,6 +207,8 @@ The `#` (fragment) is never sent to the server. GitHub Pages serves the HTML; it
 
 History stays on-device and is never transmitted. It's a private local archive.
 
+**What stays out of the sync packet (on purpose):** Per-device **settings** — custom **point overrides**, the **editable category catalog** (emoji / label / order / user-added rows), and any future decay toggles. Same rationale as overrides: keeps URLs small, avoids packet version churn, and allows each partner to keep a personal grid if they want. **Cross-partner legibility** still works because pending items carry a human-readable **`label`** (and a stable `category` key for scoring on the resolver’s device); if the resolver has never seen that key, scoring falls back to defaults and quips fall back to the generic **custom** pool until they add a matching row locally.
+
 **On tap:** app reads the fragment, merges into localStorage (URL scores and pending win, local history is preserved), clears the hash. localStorage takes over from that point.
 
 **The text thread is the commit log.** Each link encodes the state at that moment. Scroll back through the thread and you can see the ledger's history. This is a little beautiful and also ridiculous, which is right.
@@ -220,15 +222,19 @@ Add a service worker and manifest to the existing project. Partners tap "Add to 
 **No notifications needed.** The text message is the notification. The quip in the pre-composed text is the push notification body. No server required.
 
 ### Settings Page
-A shared settings screen accessible to both partners. Covers:
+A shared settings screen accessible to both partners.
 
-- **Partner names** — what appears on scorecards and in the ledger
-- **Category point values** — adjust defaults per category; changes apply going forward, not retroactively
+**Shipped in the current `index.html` mock:** slide-up panel (gear control) with **partner names** (stored with local state; included in URL sync for scores/pending flow), **per-category point overrides** (`customPoints` in localStorage; **not** in the `#state=` packet), and **no** global reset / wipe ledger.
+
+**Planned (not yet in the mock):**
+- **Categories (CRUD)** — add, edit (emoji, label), reorder, and remove rows from the award/request category grid. Shipped defaults remain available in code as seeds; the couple’s list becomes the editable runtime source. **Delete policy:** do not allow removing a category key that still appears in **pending** (block with a clear message until those requests are awarded or passed), so resolution never points at a ghost key. Ledger rows already store readable labels; renaming does not rewrite history.
+- **Quips for user-added categories (MVP):** use the existing **custom** quip pool until per-category quip editing exists. Keeps tone consistent without exploding scope.
 - **Decay half-lives** — per category, if decay is enabled
 - **Decay on/off toggle** — the feature should be opt-in; not every couple will want it
-- **No global reset in settings** — by design (see **Design choice: In-app reset**); couples who need a blank slate use OS-level app data removal / reinstall
 
 Settings should be mundane-looking on purpose. The emotional texture of the app lives in the award/request flow, not in configuration.
+
+**Build order (see `BUILD-v2.md`):** implement the settings shell and point overrides first, then category CRUD in that same panel, then PWA install — so installable builds inherit a complete settings story.
 
 ### Stack
 | Layer | Choice | Rationale |
@@ -302,8 +308,8 @@ The half-life values in the table above are guesses. Real calibration requires l
 Passing a request is a small act with real emotional weight. Does the app acknowledge that weight, or treat it as a neutral UI action?
 
 Options:
-- Neutral (current): pass button, request disappears
-- Named: the pass button says something specific ("Not this one" / "Let it go")
+- Neutral: pass button, request disappears
+- Named (**current in `index.html`**): the pass button says **“Not this one”**; request disappears
 - Consequential: passed requests increment a private counter that only the requester sees, surfaced occasionally
 
 ---
@@ -327,17 +333,18 @@ The `index.html` prototype is a functional proof of concept for:
 - Request flow with pending queue and resolution
 - Ledger with entry type tagging (primary line = what was noticed; quip on a second line when present)
 - Persistent state via localStorage
-- Fixed per-category point values (`pointValues` map; not randomized)
+- Default per-category point values (`pointValues` map; not randomized), plus **local overrides** in Settings (`customPoints`; not synced in URL)
+- Award **multiplier** (1× / 2× / 3×) on spontaneous awards only; resets after each award
+- **Settings** slide-up (header gear): partner names, per-category point inputs, backdrop / Done / Escape to close; names flow through `#state=`; overrides stay on-device
 - URL-as-state sync packet (`#state=` hash, base64 JSON) with load-time apply and hash strip
 - Messages (`sms:`) handoff after spontaneous award, after request, and after awarding a pending request (with desktop URL-in-toast fallback); pre-filled SMS follows *Core Mechanics* (points, recipient, what was noticed, link — quip stays in-app)
-- Pass dismiss with **no** ledger row (“Not this one”), matching the URL model
+- Pass dismiss with **no** ledger row (**“Not this one”**), matching the URL model
 - The emotional tone of the quip writing
 
 What it does not yet capture:
-- Award multiplier (1× / 2× / 3×)
 - Decay
-- Settings page (names + per-category overrides per `BUILD-v2.md` Step 8)
-- PWA manifest + service worker (installable)
+- Category CRUD in Settings (add / edit / reorder / delete grid; `BUILD-v2.md` Step 9)
+- PWA manifest + service worker (installable; `BUILD-v2.md` Step 10)
 
 The mock is the right fidelity for now. It's enough to show someone and have a real conversation about whether it works.
 
