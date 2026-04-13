@@ -49,7 +49,7 @@ The scoreboard line is the **hook**; the soul is **mirroring**. When in doubt, s
 
 ** Next Steps
 :tag:action:goals:
-- 2026-04-13: BUILD-v2 Step 1 shipped — ~pointValues~ map + lookup in ~awardPoints~/~resolveRequest~; follow Step 2 onward (URL sync, ~sms:~, [[file:ROADMAP-12w.md][ROADMAP-12w.md]] weeks 1–3).
+- 2026-04-13: BUILD-v2 Steps 1–3 in ~index.html~ — ~pointValues~; URL ~#state=~ sync (~buildSyncPacket~/~applyPacket~/etc.); award path ~openMessages~ + ~showToastThenSyncMessages~ (mobile ~sms:~ body with share link, desktop toast shows URL to copy); next: Step 4 request handoff, then PWA ([[file:ROADMAP-12w.md][ROADMAP-12w.md]]).
 - Keep prototype honest in [[file:index.html][index.html]] until those steps land.
 
 # The End

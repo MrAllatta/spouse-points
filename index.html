@@ -637,6 +637,7 @@
       });
 
       loadState();
+      checkHashState();
       syncNames();
 
       document.getElementById("name-a").addEventListener("input", syncNames);
@@ -711,7 +712,7 @@
       };
       state.history.unshift(entry);
       renderHistory();
-      showToast(points, quip, recipientName);
+      showToastThenSyncMessages(points, quip, recipientName);
       clearForm();
       saveState();
     }
@@ -810,6 +811,24 @@
       setTimeout(() => toast.classList.remove("show"), 3500);
     }
 
+    function openMessages(precomposedText) {
+      const encoded = encodeURIComponent(precomposedText);
+      window.location.href = `sms:?body=${encoded}`;
+    }
+
+    function showToastThenSyncMessages(points, quip, recipientName) {
+      const url = buildShareURL();
+      showToast(points, quip, recipientName);
+      const isMobile = /iPhone|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        setTimeout(() => {
+          openMessages(`+${points} to ${recipientName} 🎉 ${url}`);
+        }, 450);
+      } else {
+        document.getElementById("toast-quip").textContent = url;
+      }
+    }
+
     function renderPending() {
       const section = document.getElementById("pending-section");
       const list = document.getElementById("pending-list");
@@ -894,6 +913,48 @@
           renderPending();
         }
       } catch (e) {}
+    }
+
+    function buildSyncPacket() {
+      return {
+        v: 1,
+        scores: state.scores,
+        names: {
+          a: document.getElementById("name-a").value,
+          b: document.getElementById("name-b").value,
+        },
+        pending: state.pending,
+        ts: Date.now(),
+      };
+    }
+
+    function buildShareURL() {
+      const encoded = btoa(JSON.stringify(buildSyncPacket()));
+      return `${location.origin}${location.pathname}#state=${encoded}`;
+    }
+
+    function applyPacket(packet) {
+      if (!packet || packet.v !== 1) return;
+      state.scores = packet.scores;
+      state.pending = packet.pending || [];
+      if (packet.names) {
+        document.getElementById("name-a").value = packet.names.a || "PARTNER A";
+        document.getElementById("name-b").value = packet.names.b || "PARTNER B";
+      }
+      document.getElementById("score-a").textContent = state.scores.a;
+      document.getElementById("score-b").textContent = state.scores.b;
+      syncNames();
+      renderPending();
+      saveState();
+    }
+
+    function checkHashState() {
+      if (!location.hash.startsWith("#state=")) return;
+      try {
+        const packet = JSON.parse(atob(location.hash.slice(7)));
+        applyPacket(packet);
+      } catch (e) {}
+      history.replaceState(null, "", location.pathname);
     }
 
     // BUILD-v2 Step 1: quick check — coffee = 1, birth = 1_000_000 (see console).
