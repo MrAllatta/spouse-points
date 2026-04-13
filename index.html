@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Spouse Points</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#e07a5f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Spouse Points">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <style>
     :root {
       --bg: #faf7f2;
@@ -141,29 +147,13 @@
       text-align: center;
     }
 
-    .recipient-toggle {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1.2rem;
-    }
-
-    .recipient-toggle button {
-      flex: 1;
-      padding: 0.6rem;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      background: var(--card);
-      color: var(--text);
-      font-family: inherit;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .recipient-toggle button.active {
-      border-color: var(--accent);
-      background: var(--accent);
-      color: white;
+    .role-hint {
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--text-light);
+      line-height: 1.45;
+      margin-bottom: 1.1rem;
+      min-height: 2.6em;
     }
 
     .category-grid {
@@ -823,14 +813,7 @@
 
     <h2 id="section-heading">Award Points</h2>
 
-    <div class="recipient-toggle">
-      <button id="toggle-a" class="active" onclick="setRecipient('a')">
-        <span id="toggle-label-a">Partner A</span>
-      </button>
-      <button id="toggle-b" onclick="setRecipient('b')">
-        <span id="toggle-label-b">Partner B</span>
-      </button>
-    </div>
+    <p class="role-hint" id="role-hint" aria-live="polite"></p>
 
     <div class="multiplier-toggle" id="multiplier-row">
       <button type="button" class="mult-btn active" data-mult="1" onclick="setMultiplier(1)">1×</button>
@@ -868,16 +851,16 @@
   <div class="settings-backdrop" id="settings-backdrop" onclick="closeSettings()"></div>
   <div class="settings-panel" id="settings-panel" onclick="event.stopPropagation()">
     <h2>Settings</h2>
-    <p class="settings-hint">Names sync to the scoreboard and share links. Point overrides stay on this device only.</p>
+    <p class="settings-hint">Each install is one phone: Partner A is <strong>you</strong> on this device; Partner B is your spouse. Names and scores travel in share links; point overrides and categories stay on this device only.</p>
 
     <div class="settings-names">
       <div>
-        <label class="settings-field-label" for="name-a">Partner A</label>
+        <label class="settings-field-label" for="name-a">You (Partner A)</label>
         <input class="settings-name-input" id="name-a" value="PARTNER A" maxlength="16"
                onfocus="this.select()" />
       </div>
       <div>
-        <label class="settings-field-label" for="name-b">Partner B</label>
+        <label class="settings-field-label" for="name-b">Your spouse (Partner B)</label>
         <input class="settings-name-input" id="name-b" value="PARTNER B" maxlength="16"
                onfocus="this.select()" />
       </div>
@@ -1660,6 +1643,10 @@
     // BUILD-v2 Step 1: quick check — coffee = 1, birth = 1_000_000 (see console).
     console.assert(pointValues.coffee === 1, "pointValues.coffee should be 1");
     console.assert(pointValues.birth === 1000000, "pointValues.birth should be 1_000_000");
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js");
+    }
 
     init();
   </script>

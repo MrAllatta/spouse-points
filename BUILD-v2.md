@@ -32,7 +32,7 @@
 | 7 | Award multiplier 1× / 2× / 3× | Shipped |
 | 8 | Settings panel (names + point overrides) | Shipped |
 | 9 | Category CRUD in Settings | Not started |
-| 10 | PWA (installable) | Not started |
+| 10 | PWA (installable) | Shipped |
 
 ---
 
@@ -337,8 +337,8 @@ if ("serviceWorker" in navigator) {
 - [ ] New category uses correct points; unknown key on partner device resolves with fallback quips *(Step 9)*
 - [x] No in-app reset to wipe scores/ledger (verify absent in Settings); fresh start only via OS / private window / clear site data*
 - [x] Desktop: SMS handoff degrades gracefully (shows URL in toast) *(implemented; confirm on device)*
-- [ ] PWA: installs to home screen on iOS and Android *(Step 10)*
-- [ ] Offline: app loads after install with no network *(Step 10)*
+- [x] PWA: installs to home screen on iOS and Android *(Step 10; confirm on device)*
+- [x] Offline: app loads after install with no network *(Step 10; confirm on device)*
 
 ---
 
