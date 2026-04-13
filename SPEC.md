@@ -109,6 +109,20 @@ The ratio of spontaneous to requested awards over time is the real signal.
 
 ---
 
+## Design choice: In-app reset (scores / ledger)
+
+**Tension:** A one-tap reset is convenient for **development and QA** (clean localStorage, repeat flows). For the **product experience**, a reset button says “none of this counted” — which fights the premise that the app is a small **archive of noticing**, not a sandbox you rewind.
+
+**Metaphor:** You cannot un-have a baby, un-do a hard week, or un-notice a gesture that landed. Irreversibility is part of the emotional honesty of the mirror. If the scoreboard stayed purely competitive, a reset would read like “new season.” Here it would read like **erasing shared history**, which is the wrong affordance for a couple’s ledger.
+
+**How to start over anyway (by design):** Deleting the app / clearing site data / reinstalling is a **deliberate, outside-the-flow** nuclear option — the couple is not offered an everyday “undo us” in the UI. That keeps “we’re starting fresh” a **real decision** (it costs friction), not a mis-tap.
+
+**Testing without a product reset:** Developers clear `localStorage`, use a private window, or maintain a throwaway install — no shipped control required.
+
+**Working stance:** **Do not ship** a user-facing **reset scores** or **wipe ledger** in core settings for v1/v2. Revisit only if a future mode is explicitly “practice / demo” and visually separated from the real ledger (not currently planned).
+
+---
+
 ## Planned Features (Not Yet Built)
 
 ### Point Decay
@@ -210,7 +224,7 @@ A shared settings screen accessible to both partners. Covers:
 - **Category point values** — adjust defaults per category; changes apply going forward, not retroactively
 - **Decay half-lives** — per category, if decay is enabled
 - **Decay on/off toggle** — the feature should be opt-in; not every couple will want it
-- **Reset ledger** — wipe history and scores; requires confirmation (deliberate double-tap)
+- **No global reset in settings** — by design (see **Design choice: In-app reset**); couples who need a blank slate use OS-level app data removal / reinstall
 
 Settings should be mundane-looking on purpose. The emotional texture of the app lives in the award/request flow, not in configuration.
 
