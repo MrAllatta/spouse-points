@@ -337,6 +337,36 @@
       border-color: var(--text);
     }
 
+    .multiplier-toggle {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    .mult-btn {
+      flex: 1;
+      max-width: 4.5rem;
+      padding: 0.45rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-light);
+      transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.1s;
+    }
+
+    .mult-btn:active { transform: scale(0.98); }
+
+    .mult-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
     .request-submit {
       width: 100%;
       padding: 0.9rem;
@@ -483,6 +513,12 @@
       <button id="toggle-b" onclick="setRecipient('b')">
         <span id="toggle-label-b">Partner B</span>
       </button>
+    </div>
+
+    <div class="multiplier-toggle" id="multiplier-row">
+      <button type="button" class="mult-btn active" data-mult="1" onclick="setMultiplier(1)">1×</button>
+      <button type="button" class="mult-btn" data-mult="2" onclick="setMultiplier(2)">2×</button>
+      <button type="button" class="mult-btn" data-mult="3" onclick="setMultiplier(3)">3×</button>
     </div>
 
     <div class="category-grid" id="categories"></div>
@@ -650,6 +686,7 @@
       recipient: "a",
       selectedCategory: null,
       mode: "award",
+      multiplier: 1,
       scores: { a: 0, b: 0 },
       history: [],
       pending: [],
@@ -691,12 +728,20 @@
       const btn = document.getElementById("submit-btn");
       btn.textContent = mode === "award" ? "Award Points" : "Request Points";
       btn.className = mode === "award" ? "award-btn" : "request-submit";
+      document.getElementById("multiplier-row").style.display = mode === "award" ? "flex" : "none";
     }
 
     function setRecipient(who) {
       state.recipient = who;
       document.getElementById("toggle-a").className = who === "a" ? "active" : "";
       document.getElementById("toggle-b").className = who === "b" ? "active" : "";
+    }
+
+    function setMultiplier(n) {
+      state.multiplier = n;
+      document.querySelectorAll("#multiplier-row .mult-btn").forEach((b) => {
+        b.classList.toggle("active", Number(b.dataset.mult) === n);
+      });
     }
 
     function selectCategory(key, btn) {
@@ -728,7 +773,7 @@
       if (!cat && !custom) return;
 
       const key = cat || "custom";
-      const points = pointValues[key] ?? 2;
+      const points = (pointValues[key] ?? 2) * state.multiplier;
       const pool = quips[key];
       const quip = pool[Math.floor(Math.random() * pool.length)];
 
@@ -842,6 +887,7 @@
       document.getElementById("custom-reason").value = "";
       document.querySelectorAll(".category-btn").forEach((b) => b.classList.remove("selected"));
       state.selectedCategory = null;
+      setMultiplier(1);
     }
 
     function showToast(points, quip, name) {
