@@ -76,7 +76,7 @@ The mechanic travels; the **quips and categories do not** auto-travel by swappin
 One partner notices something the other did and awards points for it. Spontaneous noticing is the primary gesture the app is designed to encourage.
 
 - **Recipient on this device:** always **Partner B** — your spouse. **Partner A** is *you* on the phone where the app is installed. There is **no in-app “which partner am I?” toggle**; the install is owned by one person, you both keep a scoreboard, and every outbound award is “I noticed you.” Names for A and B are set in Settings on each phone (each partner’s install should name themselves as A and the other as B).
-- Category selected from a **fixed default grid** in the current mock (same caricature list for everyone); **per-category point values** are editable in Settings. **Row-level category CRUD** (add / rename / reorder / delete categories) is planned (`BUILD-v2.md` Step 9), not yet in `index.html`. Freeform detail remains available via the custom line + category choice.
+- Category selected from the **grid on this device** — seeded from the same default caricature list for everyone, then **editable in Settings** (add / rename / reorder / delete rows; see `BUILD-v2.md` Step 9, shipped in `index.html`). **Per-category point values** are editable in Settings. Freeform detail remains available via the custom line + category choice.
 - Points awarded: fixed value per category (with optional local overrides), sensible defaults — not randomized
 - A quip surfaces on award — dry, specific, not generic
 - **Completes by opening Messages** with a pre-composed text and sync link — there are no private awards. Awarding points without telling your partner is keeping a diary. The mechanic doesn't allow it. The draft text leads with points, recipient, and **what was noticed** (category and optional detail), then the sync link — not the quip.
@@ -166,7 +166,7 @@ Default values (illustrative):
 
 An optional multiplier at time of award handles the "I did them without being asked for the third week running — that felt like more" case. Simple: 1× / 2× / 3×. Not a slider.
 
-Both the default values and the multiplier options are adjustable in Settings. The **category list itself** (rows in the grid) is also editable there once category CRUD ships (`BUILD-v2.md` Step 9).
+Both the default values and the multiplier options are adjustable in Settings. The **category list itself** (rows in the grid) is editable in the same panel (`BUILD-v2.md` Step 9 — shipped).
 
 ### Persistence & Device Model
 
@@ -211,6 +211,8 @@ History stays on-device and is never transmitted. It's a private local archive.
 
 **On tap:** app reads the fragment, merges into localStorage (URL scores and pending win, local history is preserved), clears the hash. localStorage takes over from that point.
 
+**Onboarding toast after a link:** Right after a successful `#state=` apply, the client may show a **non-blocking info toast** (same chrome as the award toast, distinct styling) when local names still look like **placeholders** (`PARTNER A` / `PARTNER B`, empty, etc.) — telling the recipient to open **Settings** and set **You (A)** and **Your spouse (B)** so slotting and future swaps stay trustworthy. A second case: packet `names` are present but **neither** sender name matches **either** local field (typo / wrong person) so orientation is ambiguous — toast nudges them to align spelling with the thread. No extra persistence flag is required; the toast repeats on each link open until names look real and consistent, which is preferable to silently wrong totals.
+
 **Slotting across two installs:** On each phone, **A = this device’s user** and **B = their spouse** (names in Settings). The sync packet still carries `scores.a` / `scores.b` and `names` as the **sender** encoded them. On apply, if the sender’s `names.a` matches this device’s Partner B (and conversely), the client **swaps** incoming `a`/`b` for scores and flips `requester` on pending rows so totals and the queue stay aligned with *local* A=me / B=spouse. **Display names in Settings are not overwritten** from the link so your install keeps “you” on A. Packet `names` remain in the payload for SMS legibility and for this orientation check.
 
 **The text thread is the commit log.** Each link encodes the state at that moment. Scroll back through the thread and you can see the ledger's history. This is a little beautiful and also ridiculous, which is right.
@@ -219,7 +221,7 @@ History stays on-device and is never transmitted. It's a private local archive.
 
 **V2.5: PWA (installed software)**
 
-Add a service worker and manifest to the existing project. Partners tap "Add to Home Screen" once. After that it launches from an icon, runs without browser chrome, loads instantly, works offline. The URL-as-sync mechanism is identical. "Installed software with text as sync" is a PWA — roughly two hours of additional work on top of what exists.
+**Shipped in this repo:** `manifest.json`, `sw.js`, icons, and head meta in `index.html` (`BUILD-v2.md` Step 10). Partners use **Add to Home Screen** once; the app launches standalone and the URL-as-sync mechanism is unchanged. The service worker precaches the shell (including icons and manifest) and serves a cached `index.html` for offline navigation where supported.
 
 **No notifications needed.** The text message is the notification. The quip in the pre-composed text is the push notification body. No server required.
 
@@ -228,15 +230,13 @@ Settings on **each** install (not a literal shared screen): both people configur
 
 **Shipped in the current `index.html` mock:** slide-up panel (gear control) with **Partner A = you (this phone)** and **Partner B = your spouse** (stored with local state; **names are included in the URL packet** for legibility and orientation, but **opening a link does not replace** your local name fields), **per-category point overrides** (`customPoints` in localStorage; **not** in the `#state=` packet), **category CRUD** in the same panel, and **no** global reset / wipe ledger.
 
-**Planned (not yet in the mock):**
-- **Categories (CRUD)** — add, edit (emoji, label), reorder, and remove rows from the award/request category grid. Shipped defaults remain available in code as seeds; the couple’s list becomes the editable runtime source. **Delete policy:** do not allow removing a category key that still appears in **pending** (block with a clear message until those requests are awarded or passed), so resolution never points at a ghost key. Ledger rows already store readable labels; renaming does not rewrite history.
-- **Quips for user-added categories (MVP):** use the existing **custom** quip pool until per-category quip editing exists. Keeps tone consistent without exploding scope.
+**Still planned (not shipped):**
 - **Decay half-lives** — per category, if decay is enabled
 - **Decay on/off toggle** — the feature should be opt-in; not every couple will want it
 
 Settings should be mundane-looking on purpose. The emotional texture of the app lives in the award/request flow, not in configuration.
 
-**Build order (see `BUILD-v2.md`):** implement the settings shell and point overrides first, then category CRUD in that same panel, then PWA install — so installable builds inherit a complete settings story.
+**Build order (see `BUILD-v2.md`):** settings shell and point overrides first, then category CRUD in that same panel, then PWA install — that sequence is **complete** in the current tree (Steps 8–10 shipped 2026-04-13).
 
 ### Stack
 | Layer | Choice | Rationale |
@@ -332,21 +332,21 @@ Tied to the debate in **Scoreboard numbers vs. what “points” really are** (a
 
 The `index.html` prototype is a functional proof of concept for:
 - **Single-owner device model:** Partner A is always the person holding this install; Partner B is always their spouse. Awards always credit B; requests always come from A. No partner switcher on the main screen.
-- Award flow with categories and quips
+- Award flow with categories and quips (grid is default-seeded and **user-editable** in Settings)
 - Request flow with pending queue and resolution
 - Ledger with entry type tagging (primary line = what was noticed; quip on a second line when present)
 - Persistent state via localStorage
 - Default per-category point values (`pointValues` map; not randomized), plus **local overrides** in Settings (`customPoints`; not synced in URL)
 - Award **multiplier** (1× / 2× / 3×) on spontaneous awards only; resets after each award
 - **Settings** slide-up (header gear): you/spouse names, **category CRUD** (reorder / edit / add / delete with pending guard), per-category point inputs, backdrop / Done / Escape to close; names are **in** the `#state=` packet for SMS + orientation; **local** name fields stay yours; overrides stay on-device
-- URL-as-state sync packet (`#state=` hash, base64 JSON) with load-time apply, **A/B swap when the sender’s “who is A” differs from this phone**, and hash strip
+- URL-as-state sync packet (`#state=` hash, base64 JSON) with load-time apply, **A/B swap when the sender’s “who is A” differs from this phone**, **onboarding toast** after link open when names are still placeholders or don’t match the packet, and hash strip
 - Messages (`sms:`) handoff after spontaneous award, after request, and after awarding a pending request (with desktop URL-in-toast fallback); pre-filled SMS follows *Core Mechanics* (points, recipient, what was noticed, link — quip stays in-app)
 - Pass dismiss with **no** ledger row (**“Not this one”**), matching the URL model
 - The emotional tone of the quip writing
 
 What it does not yet capture:
-- Decay
-- PWA polish beyond the current manifest + service worker (confirm on more devices as needed)
+- Decay (read-time half-life model is spec’d only)
+- Broader **device QA** (more phones, offline edge cases, bad `#state=` payloads — see `ROADMAP-12w.md` week 12 / `BUILD-v2.md` testing checklist)
 
 The mock is the right fidelity for now. It's enough to show someone and have a real conversation about whether it works.
 

@@ -82,7 +82,7 @@ function buildShareURL() {
 }
 
 function applyPacket(packet) {
-  if (!packet || packet.v !== 1) return;
+  if (!packet || packet.v !== 1) return false;
   // Production also swaps a/b for scores + pending when packet.names
   // disagree with local “A = me, B = spouse” — see index.html / SPEC.md.
   state.scores = packet.scores;
@@ -92,6 +92,7 @@ function applyPacket(packet) {
   syncNames();
   renderPending();
   saveState();
+  return true;
 }
 ```
 
@@ -103,13 +104,15 @@ function checkHashState() {
   if (!location.hash.startsWith("#state=")) return;
   try {
     const packet = JSON.parse(atob(location.hash.slice(7)));
-    applyPacket(packet);
+    if (applyPacket(packet)) maybeShowSyncOnboardingToast(packet);
   } catch (e) {}
   history.replaceState(null, "", location.pathname);
 }
 ```
 
-**Done when:** generating a URL, opening it in a second browser tab, and seeing the correct scores and pending state load.
+`applyPacket` returns **`true`** when the packet was applied, **`false`** when ignored (bad version / shape). `maybeShowSyncOnboardingToast` runs only on success: prompts **Settings** if local names are still placeholders or empty, or if packet `names` cannot be reconciled with local You/Spouse strings (see `SPEC.md` *Onboarding toast after a link*). Production copy lives in `index.html` (`showInfoToast`, `.toast-onboarding`).
+
+**Done when:** generating a URL, opening it in a second browser tab, and seeing the correct scores and pending state load; with default names still in place, an onboarding-style toast appears once per link open until names are set.
 
 ---
 
@@ -296,18 +299,36 @@ Custom point values go into `saveState()` / `loadState()`. They do **not** go in
 <meta name="apple-mobile-web-app-title" content="Spouse Points">
 ```
 
-**Service worker** — `sw.js`, cache-first for the app shell:
+**Service worker** — `sw.js`, cache-first for the app shell (production also precaches `manifest.json` and icons, and returns a cached `index.html` for **navigate** requests when offline):
 ```js
 const CACHE = "spouse-points-v2";
-const SHELL = ["./", "./index.html"];
+const SHELL = [
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./icon-192.png",
+  "./icon-512.png",
+];
 
-self.addEventListener("install", e =>
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)))
+self.addEventListener("install", (e) =>
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)))
 );
 
-self.addEventListener("fetch", e =>
-  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)))
-);
+self.addEventListener("fetch", (e) => {
+  e.respondWith(
+    caches.match(e.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(e.request).catch(() => {
+        if (e.request.mode === "navigate") {
+          return caches.match("./index.html").then(
+            (page) => page || new Response("", { status: 503, statusText: "Offline" })
+          );
+        }
+        return new Response("", { status: 503, statusText: "Offline" });
+      });
+    })
+  );
+});
 ```
 
 Register in `index.html`:
@@ -326,7 +347,7 @@ if ("serviceWorker" in navigator) {
 ## Testing Checklist
 
 - [x] Award points → Messages opens with sync link on mobile; SMS body has what was noticed + link, **no quip** *(implemented; confirm on device)*
-- [x] Partner taps link → correct scores and names load → hash clears from URL; local ledger unchanged *(implemented; confirm on device)*
+- [x] Partner taps link → correct scores and pending load → hash clears; local ledger unchanged; local Settings names unchanged; **onboarding toast** when names still default or don’t match packet *(implemented; confirm on device)*
 - [x] Request points → Messages opens with request text and link *(implemented; confirm on device)*
 - [x] Partner taps link → pending request surfaces → Award it → **return** Messages opens with updated sync link (celebration leg) *(implemented; confirm on device)*
 - [x] Pass a request → no message sent, request disappears, no ledger entry *(implemented; confirm on device)*

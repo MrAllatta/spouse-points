@@ -6,6 +6,8 @@
 
 **References:** Execution detail lives in `BUILD-v2.md`. Product truth lives in `SPEC.md`.
 
+**Repo status (2026-04-13):** In this tree, `BUILD-v2.md` **Steps 1–10** are implemented in `index.html` (URL sync, SMS handoffs, settings, category CRUD, PWA shell). Treat rows below as **cadence / verification / narrative** guides; several “weeks” landed together in one push. Next honest gaps are **real-device QA**, **hardening**, and **optional** week 10–12 items (tips, PDF, edge-case pass) — not missing core loop code.
+
 ---
 
 ## Weeks 1–3 — Make it shareable (non-negotiable)
@@ -36,9 +38,9 @@
 
 | Week | Build | Ship / verify | Post / surface |
 |------|--------|----------------|----------------|
-| **7** | Slide-up **settings:** names centralized if needed (`BUILD-v2` Step 8, partial). **No** in-app full reset — matches `SPEC.md` *Design choice: In-app reset*. | Rename partners; confirm no wipe-ledger control ships. | Optional: “defaults are theirs to edit” if you post settings at all. |
-| **8** | Optional: per-category **point overrides** in settings (local only; **not** in sync packet per `BUILD-v2`). | Change e.g. coffee → 3, reload, award checks out. | Dev whisper or skip posting — maintenance week. |
-| **9** | **PWA:** `manifest.json`, icons, head meta, `sw.js` cache-first for `./` + `index.html` (`BUILD-v2` Step 9). | Install on iOS + Android; offline open once. | **Second anchor post:** home screen app, no account, no server. |
+| **7** | Slide-up **settings:** names (`BUILD-v2` Step 8). **No** in-app full reset — matches `SPEC.md` *Design choice: In-app reset*. | Rename partners; confirm no wipe-ledger control ships. | Optional: “defaults are theirs to edit” if you post settings at all. |
+| **8** | Per-category **point overrides** + **category CRUD** in the same panel (local only; catalog **not** in `#state=` — `BUILD-v2` Steps 8–9). | Change e.g. coffee → 3; add/reorder/delete a category; reload; award checks out. Pending rows still resolve sensibly on the partner phone. | Dev whisper or skip posting — maintenance week. |
+| **9** | **PWA:** `manifest.json`, icons, head meta, `sw.js` app-shell caching (`BUILD-v2` Step **10**). | Install on iOS + Android; offline open once. | **Second anchor post:** home screen app, no account, no server. |
 
 **End of week 9:** Installable, configurable enough to not feel frozen; couples who need a blank slate use OS-level data removal (same as spec).
 
