@@ -1,0 +1,152 @@
+# Spouse Points — quips, request lines, and adulting tone anchors
+# -----------------------------------------------------------------
+# Purpose: human–AI collaboration surface. Edit categories and lists here;
+# the live app still reads embedded copies in index.html until a sync or
+# load pipeline is added. When you change this file, mirror quips into
+# index.html `const quips` / `requestQuips` before deploy.
+
+schema_version: 1
+last_synced_from_index_html: "2026-04-13"
+
+collaboration:
+  voice: Dry, affectionate, specific to domestic partnership — not generic
+    motivational copy and not mean-spirited scorekeeping.
+  intent: Recognition and humor ("did you notice?"), not a standing measure
+    of worth.
+  for_ai_assistants: Prefer additions that sound like one marriage overheard,
+    not a content farm. Avoid stereotypes by demographic; keep adulting
+    situations concrete and good-natured.
+
+# Situations that calibrate tone when drafting new lines (not shown in UI).
+adulting_contexts:
+  - id: invisible_load
+    note: The errand, reminder, or emotional prep that never hits a todo list.
+  - id: time_shift
+    note: One partner on kid clock, the other on work clock — friction without villains.
+  - id: good_enough_home
+    note: Clean enough to breathe vs. clean enough for company — recurring negotiation.
+  - id: depleted_executive_function
+    note: Dinner still happened; nobody needs a seminar on how.
+  - id: repair_over_winning
+    note: Choosing the relationship over the last word in an argument.
+
+# Category metadata mirrors index.html `categories` (emoji, label, key).
+categories:
+  - { emoji: "🍳", label: "Cooked", key: cooked }
+  - { emoji: "🧹", label: "Cleaned", key: cleaned }
+  - { emoji: "🧒", label: "Kid duty", key: kids }
+  - { emoji: "🛒", label: "Groceries", key: groceries }
+  - { emoji: "😤", label: "Didn't sigh", key: nosigh }
+  - { emoji: "🤐", label: "Held tongue", key: tongue }
+  - { emoji: "☕", label: "Made coffee", key: coffee }
+  - { emoji: "🛏️", label: "Made bed", key: bed }
+  - { emoji: "💬", label: "Actually listened", key: listened }
+  - { emoji: "📱", label: "Put phone down", key: phone }
+  - { emoji: "🍽️", label: "Did the dishes", key: dishes }
+  - { emoji: "👶", label: "Gave birth", key: birth }
+
+# Lines shown when someone requests points (pending queue).
+request_quips:
+  - "Just going to leave this here."
+  - "Not saying anything. Just noting it for the record."
+  - "This may or may not have happened. Allegedly."
+  - "Requesting acknowledgment. No pressure. Some pressure."
+  - "Filed for consideration. Take your time. (Please don't take your time.)"
+
+# Award quips by category key (matches `quips` in index.html).
+quips:
+  cooked:
+    - "Heated something that wasn't cereal. Groundbreaking."
+    - "The smoke alarm stayed silent. That's worth double."
+    - "Fed the humans. Again. The streak continues."
+    - "Points for effort. Extra points if it was edible."
+    - "Left the kitchen navigable afterward. Underrated."
+    - "Used a vegetable on purpose. The committee will review."
+  cleaned:
+    - "Cleaned without being asked. Alert the historians."
+    - "The counter can be seen. This is not a drill."
+    - "Voluntarily touched a sponge. What a time to be alive."
+    - "Cleaned the thing behind the other thing. True love."
+    - "Threw away the thing in the fridge that had become science."
+    - "The junk drawer is no longer a hazard zone. Briefly."
+  kids:
+    - "Survived a full shift with the small ones. Medal pending."
+    - "Handled a meltdown that wasn't their own. Impressive."
+    - "Did bedtime solo. The bravest act of the week."
+    - "Managed homework without anyone crying. Including themselves."
+    - "Remembered the permission slip before the school door closed. Legendary."
+    - "Translated a child's story without correcting the plot holes."
+  groceries:
+    - "Went to the store. Came back with what was on the list. Mostly."
+    - "Navigated the parking lot on a Saturday. Heroic."
+    - "Remembered the thing we always forget. Who is this person?"
+    - "Only impulse-bought two things. Personal best."
+    - "Brought bags in on the first trip. Olympic form."
+    - "Substituted intelligently when the shelf was bare. Adaptive systems."
+  nosigh:
+    - "+2 for not sighing while folding towels."
+    - "Absorbed a moment of chaos without the exhale. Noted."
+    - "The sigh was forming. It was suppressed. That's growth."
+    - "Witnessed the mess. Said nothing. Breathed normally. Saint."
+    - "Heard the plan change again. Face stayed brave."
+  tongue:
+    - "Had the thought. Did not share the thought. Wisdom."
+    - "Swallowed a critique that would have started a whole thing."
+    - "Chose peace over accuracy. The hardest trade."
+    - "Typed it. Deleted it. Put the phone down. Legend."
+    - "Best not to say anything, my dear man."
+    - "Let the technically wrong thing slide. Married diplomacy."
+  coffee:
+    - "Made coffee for the other one first. Peak partnership."
+    - "The cup was waiting. No words needed. Just warmth."
+    - "Remembered the exact ratio. That's not caffeine, that's love."
+    - "Pre-dawn coffee delivery. The bar is low and yet."
+    - "Refilled without being asked. Civilization holds."
+  bed:
+    - "Made the bed. No one asked. No one noticed. Points anyway."
+    - "Pillows arranged. Blanket straight-ish. Enough."
+    - "The bed was made before noon. A new personal record."
+    - "Did the thing that will be undone in 14 hours. Sisyphean devotion."
+    - "Flipped the laundry before it soured. Adjacent bed victory."
+  listened:
+    - "Maintained eye contact during the full story. All of it."
+    - "Heard the thing underneath the thing. That's the hard part."
+    - "Didn't check the phone. Didn't glaze over. Didn't redirect. Rare."
+    - "Asked a follow-up question. An actual one. Points."
+    - "Let the vent be a vent. No solutions offered. Advanced."
+  phone:
+    - "Put the phone down during dinner. Radical presence."
+    - "Chose the person in the room over the people in the feed."
+    - "The phone was in another room. On purpose. For an hour."
+    - "Screen time went down. Face time went up. The real kind."
+    - "Didn't fact-check the anecdote mid-anecdote. Growth."
+  dishes:
+    - "Did the dishes. Tonight. Not tomorrow morning. Let that sink in."
+    - "The sink is empty. The bar was low and still."
+    - "Washed every dish. Did not mention it for at least ten minutes."
+    - "Dishes done before bed. A new era begins. Probably."
+    - "Ran the dishwasher and emptied it. The rare complete quest."
+  birth:
+    - "Gave birth to your child. The scoreboard does not have enough zeros."
+    - "Brought a human into the world. You are playing a different game entirely."
+    - "One million points. The gap will never close. That's appropriate."
+    - "The atomic bomb of spouse points. All other entries are now footnotes."
+  custom:
+    - "Did a thing. It was noticed. That's the whole game."
+    - "Went above and beyond the baseline of coexistence."
+    - "Small act. Big noticing. Points awarded with warmth."
+    - "The fact that you're tracking this means you're paying attention."
+
+# Literary / pop-culture nods used in quips (for attribution and future packs).
+references:
+  - quip_line: "Best not to say anything, my dear man."
+    speaker: "Albus Dumbledore"
+    audience: "Vernon Dursley"
+    work: "Harry Potter and the Philosopher's Stone"
+    note: >-
+      User-requested nod; phrasing shortened from the book/film tradition.
+      Placed under category `tongue` in quips above.
+
+# Pass resolution copy (ledger when a request is declined) — lives in JS only for now.
+pass_resolution:
+  line: "Request noted. Filed quietly."

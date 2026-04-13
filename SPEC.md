@@ -38,6 +38,38 @@ That said: it's a genuinely open question. Some couples would want it. A setting
 
 ---
 
+## Seasonal labor, default spaces, and cross-cultural versions
+
+### Seasonal spouse points
+
+Invisible labor often **spikes on a calendar**: holidays, end-of-school, birthdays stacked in one month. The same “did you notice?” lens applies to work that is real, exhausting, and easy for the other partner to skip seeing.
+
+Examples couples already shorthand without needing a formal taxonomy:
+
+- Got the kids their presents (remembering who wants what, ordering, budget)
+- Wrapped the presents
+- Got your partner’s mother a present (extended-family emotional logistics)
+- Sent the Christmas cards (or whatever your household uses for the annual “we exist and we care” outreach)
+
+These belong in the product imagination as **optional seasonal weight** — e.g. a time-limited “season pack,” toggled categories, or custom lines — not as a permanent mandatory grid that bakes one holiday into the core SKU forever. The implementation detail matters less than the principle: **when the ordinary grid under-counts a real spike, the mirror should be allowed to widen.**
+
+### Politics of defaulting into a point space
+
+Any default category set carries a worldview:
+
+- **Calendar / observance:** Examples like Christmas cards default the cultural furniture toward **Christian-adjacent** rhythms even when the app itself is secular.
+- **Gender:** The core grid already reads as **female-coded** domestic and emotional labor (named honestly earlier in this spec).
+
+**Stance:** Ship **stereotypical defaults that are obviously changeable** — editable names, custom categories, and (once settings exist) local point overrides. Defaults are a **starting caricature** the couple rewrites together, not a silent claim about whose labor is universal. Surface in UI or onboarding that the list is **theirs to edit**, so the politics of the default land as **visible and reversible** rather than smuggled in as neutral truth.
+
+### Other cultures: partners, not synthetic “packs”
+
+The mechanic travels; the **quips and categories do not** auto-travel by swapping string tables or prompting a model. A version tuned for another culture needs people who **live inside the joke** in that context — co-authors, reviewers, or couples you actually know — so tone stays affectionate and specific instead of generic “localized” slop that reads as opportunistic or performed.
+
+**Rule of thumb:** No culture-specific pack ships on AI- or checklist-authored stereotypes alone. Authentic partnership in the writing is part of the definition of done, the same way the English quips were tuned for one marriage before anything generalized.
+
+---
+
 ## Core Mechanics
 
 ### 1. Award Points
@@ -195,6 +227,28 @@ Settings should be mundane-looking on purpose. The emotional texture of the app 
 
 ---
 
+## Debate: Scoreboard numbers vs. what “points” really are
+
+The product has **drifted toward the scoreboard analogy** — that is **low-hanging fruit**: totals are easy to render, easy to sync in a URL packet, and easy to reason about in code. **Adding more number surface is easy**, which is exactly why it deserves suspicion.
+
+### One position: numbers are a pragmatic early compromise, not the thesis
+
+**Spouse points**, in the truer reading, are **recognitions** and **how long they last** (decay, half-life, emotional residue) — not a standing comparison of worth. A **non-numeric tally** (badges, ribbons, last-five moments, “weight” without pairwise totals) would be closer to sublime UI: you see *gestures* and *recency*, not two integers in a race. **Resisting numbers alongside numbers** (big total + category points + ledger math all shouting “who won”) is healthy.
+
+Still: **v1 and v2 may need to stay numeric** so the loop ships — sync, ledger, and Messages copy stay legible without inventing a whole symbolic economy first. Numbers-first early versions can be **explicitly temporary scaffolding** if the copy and visuals keep nudging toward *noticed*, not *ahead*.
+
+### The other position: not even v1 should show competitive totals
+
+**Who has more is not the point.** If the north star is *did you notice?*, then a running head-to-head total risks becoming the emotional center of gravity no matter what the quips say — especially under stress. On this view, shipping numeric totals at all (even “small” numbers) trains the wrong muscle.
+
+### Absurdity as a pressure valve
+
+**1,000,000 for birth** works because the number is **obviously a joke**, not a fungible score — it breaks the “we’re seriously counting” frame. That suggests a design pattern: when numbers stay, **let some of them be absurd or non-comparable** so the UI can signal “this category is not in the same game as coffee.” Early versions might lean on **scale discontinuity and humor** until a richer non-numeric or decay-forward presentation is worth the build.
+
+**Unresolved:** whether future versions **remove or hide running totals**, replace them with **recency / recognition feeds**, or keep totals but **treat them as vestigial** (always secondary to ledger stories and messages). Worth revisiting after the shareable text loop has real mileage.
+
+---
+
 ## Open Design Questions
 
 **1. Are requested points worth the same as spontaneous ones?**
@@ -241,6 +295,12 @@ Options:
 **6. Should the ledger be permanent or rolling?**
 
 A permanent ledger is an archive of the relationship. A rolling ledger (last 30 days, for example) reflects only the current pattern. Both have merit. The archive is meaningful; the rolling window is actionable.
+
+---
+
+**7. Should running numeric totals stay central — or move aside for recognition-first UI?**
+
+Tied to the debate in **Scoreboard numbers vs. what “points” really are** (above): competitive totals vs. ledger-as-story vs. non-numeric / decay-forward presentations; whether absurd values (e.g. birth) are enough of a long-term escape hatch.
 
 ---
 
