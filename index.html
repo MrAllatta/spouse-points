@@ -30,9 +30,47 @@
     }
 
     header {
-      text-align: center;
-      padding: 2.5rem 1rem 1rem;
       max-width: 600px;
+      width: 100%;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 2.5rem 1rem 1rem;
+    }
+
+    .header-spacer {
+      width: 2.5rem;
+      flex-shrink: 0;
+    }
+
+    .header-center {
+      flex: 1;
+      text-align: center;
+      min-width: 0;
+    }
+
+    .settings-gear {
+      flex-shrink: 0;
+      width: 2.5rem;
+      height: 2.5rem;
+      margin-top: 0.15rem;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text-light);
+      font-size: 1.35rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .settings-gear:hover {
+      background: var(--border);
+      color: var(--text);
     }
 
     header h1 {
@@ -76,25 +114,6 @@
       letter-spacing: 1.5px;
       color: var(--text-light);
       margin-bottom: 0.4rem;
-    }
-
-    .score-card .name-input {
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--text-light);
-      border: none;
-      border-bottom: 1px dashed var(--border);
-      background: transparent;
-      text-align: center;
-      width: 100%;
-      padding: 0.2rem;
-      font-family: inherit;
-      outline: none;
-    }
-
-    .score-card .name-input:focus {
-      border-bottom-color: var(--accent);
     }
 
     .score-card .points {
@@ -470,6 +489,169 @@
 
     .history-entry.passed { opacity: 0.4; }
 
+    .settings-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(61, 64, 91, 0.38);
+      z-index: 140;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .settings-backdrop.open {
+      display: block;
+      opacity: 1;
+    }
+
+    .settings-panel {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      max-height: 88vh;
+      background: var(--card);
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -10px 40px rgba(61, 64, 91, 0.18);
+      z-index: 150;
+      padding: 1.35rem 1.5rem 2rem;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      pointer-events: none;
+    }
+
+    .settings-panel.open {
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .settings-panel h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.25rem;
+      color: var(--text);
+    }
+
+    .settings-panel .settings-hint {
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--text-light);
+      margin-bottom: 1rem;
+      line-height: 1.4;
+    }
+
+    .settings-names {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .settings-field-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text-light);
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    .settings-name-input {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .settings-name-input:focus {
+      border-color: var(--accent);
+    }
+
+    .settings-section-title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text-light);
+      margin: 1.15rem 0 0.5rem;
+    }
+
+    .settings-point-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-point-row:last-child {
+      border-bottom: none;
+    }
+
+    .settings-point-label {
+      font-size: 0.9rem;
+      color: var(--text);
+      min-width: 0;
+    }
+
+    .settings-point-input {
+      width: 5.5rem;
+      flex-shrink: 0;
+      padding: 0.45rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      text-align: right;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .settings-point-input:focus {
+      border-color: var(--accent);
+    }
+
+    .settings-done {
+      width: 100%;
+      margin-top: 1.35rem;
+      padding: 0.85rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .settings-done:hover {
+      background: var(--accent-hover);
+    }
+
+    .settings-done:active {
+      transform: scale(0.98);
+    }
+
+    .score-card .name-display {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-light);
+      margin-bottom: 0.4rem;
+      min-height: 1.35em;
+      line-height: 1.3;
+    }
+
     @media (max-width: 480px) {
       header h1 { font-size: 1.8rem; }
       .scoreboard { gap: 1rem; }
@@ -481,19 +663,23 @@
 <body>
 
   <header>
-    <h1>Spouse Points</h1>
-    <p class="tagline">A little scoreboard helps us laugh while we learn to notice each other.</p>
+    <div class="header-row">
+      <div class="header-spacer" aria-hidden="true"></div>
+      <div class="header-center">
+        <h1>Spouse Points</h1>
+        <p class="tagline">A little scoreboard helps us laugh while we learn to notice each other.</p>
+      </div>
+      <button type="button" class="settings-gear" onclick="openSettings()" aria-label="Open settings">⚙</button>
+    </div>
   </header>
 
   <div class="scoreboard">
     <div class="score-card">
-      <input class="name-input" id="name-a" value="PARTNER A" maxlength="16"
-             onfocus="this.select()" />
+      <div class="name-display" id="display-name-a">PARTNER A</div>
       <div class="points" id="score-a">0</div>
     </div>
     <div class="score-card">
-      <input class="name-input" id="name-b" value="PARTNER B" maxlength="16"
-             onfocus="this.select()" />
+      <div class="name-display" id="display-name-b">PARTNER B</div>
       <div class="points" id="score-b">0</div>
     </div>
   </div>
@@ -547,6 +733,30 @@
     Appreciation should not require a scoreboard &mdash; but here we are.
     &copy; 2026 Eric Allatta
   </footer>
+
+  <div class="settings-backdrop" id="settings-backdrop" onclick="closeSettings()"></div>
+  <div class="settings-panel" id="settings-panel" onclick="event.stopPropagation()">
+    <h2>Settings</h2>
+    <p class="settings-hint">Names sync to the scoreboard and share links. Point overrides stay on this device only.</p>
+
+    <div class="settings-names">
+      <div>
+        <label class="settings-field-label" for="name-a">Partner A</label>
+        <input class="settings-name-input" id="name-a" value="PARTNER A" maxlength="16"
+               onfocus="this.select()" />
+      </div>
+      <div>
+        <label class="settings-field-label" for="name-b">Partner B</label>
+        <input class="settings-name-input" id="name-b" value="PARTNER B" maxlength="16"
+               onfocus="this.select()" />
+      </div>
+    </div>
+
+    <div class="settings-section-title">Points per category</div>
+    <div id="settings-points-grid"></div>
+
+    <button type="button" class="settings-done" onclick="closeSettings()">Done</button>
+  </div>
 
   <div class="result-toast" id="toast">
     <div class="point-award" id="toast-points"></div>
@@ -690,7 +900,12 @@
       scores: { a: 0, b: 0 },
       history: [],
       pending: [],
+      customPoints: {},
     };
+
+    function pointsForKey(key) {
+      return state.customPoints[key] ?? pointValues[key] ?? 2;
+    }
 
     function init() {
       const grid = document.getElementById("categories");
@@ -705,15 +920,75 @@
 
       loadState();
       checkHashState();
+      renderSettingsPointInputs();
       syncNames();
 
       document.getElementById("name-a").addEventListener("input", syncNames);
       document.getElementById("name-b").addEventListener("input", syncNames);
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape") return;
+        const panel = document.getElementById("settings-panel");
+        if (panel && panel.classList.contains("open")) closeSettings();
+      });
+    }
+
+    function renderSettingsPointInputs() {
+      const grid = document.getElementById("settings-points-grid");
+      if (!grid) return;
+      const rows = categories.concat([{ emoji: "✨", label: "Custom / other", key: "custom" }]);
+      grid.innerHTML = rows
+        .map((c) => {
+          const def = pointValues[c.key] ?? 2;
+          const val = pointsForKey(c.key);
+          const label = `${c.emoji} ${c.label}`;
+          return `<div class="settings-point-row">
+            <span class="settings-point-label">${label}</span>
+            <input type="number" class="settings-point-input" min="0" max="999999999" step="1"
+                   data-key="${c.key}" value="${val}" onchange="onCustomPointChange(this)" />
+          </div>`;
+        })
+        .join("");
+    }
+
+    function onCustomPointChange(el) {
+      const key = el.dataset.key;
+      if (!key) return;
+      const def = pointValues[key] ?? 2;
+      const raw = String(el.value).trim();
+      let n = parseInt(raw, 10);
+      if (raw === "" || Number.isNaN(n)) {
+        delete state.customPoints[key];
+        el.value = def;
+        saveState();
+        return;
+      }
+      n = Math.max(0, Math.min(999999999, n));
+      if (n === def) delete state.customPoints[key];
+      else state.customPoints[key] = n;
+      el.value = n;
+      saveState();
+    }
+
+    function openSettings() {
+      renderSettingsPointInputs();
+      document.getElementById("settings-backdrop").classList.add("open");
+      document.getElementById("settings-panel").classList.add("open");
+    }
+
+    function closeSettings() {
+      document.getElementById("settings-backdrop").classList.remove("open");
+      document.getElementById("settings-panel").classList.remove("open");
+      syncNames();
     }
 
     function syncNames() {
       const a = document.getElementById("name-a").value || "Partner A";
       const b = document.getElementById("name-b").value || "Partner B";
+      const dispA = document.getElementById("display-name-a");
+      const dispB = document.getElementById("display-name-b");
+      if (dispA) dispA.textContent = a;
+      if (dispB) dispB.textContent = b;
       document.getElementById("toggle-label-a").textContent = a;
       document.getElementById("toggle-label-b").textContent = b;
       saveState();
@@ -773,7 +1048,7 @@
       if (!cat && !custom) return;
 
       const key = cat || "custom";
-      const points = (pointValues[key] ?? 2) * state.multiplier;
+      const points = pointsForKey(key) * state.multiplier;
       const pool = quips[key];
       const quip = pool[Math.floor(Math.random() * pool.length)];
 
@@ -840,7 +1115,7 @@
 
       if (action === "award") {
         const key = request.category || "custom";
-        const points = pointValues[key] ?? 2;
+        const points = pointsForKey(key);
         const pool = quips[key] || quips.custom;
         const quip = pool[Math.floor(Math.random() * pool.length)];
 
@@ -986,6 +1261,7 @@
         scores: state.scores,
         history: state.history,
         pending: state.pending,
+        customPoints: state.customPoints,
         names: {
           a: document.getElementById("name-a").value,
           b: document.getElementById("name-b").value,
@@ -999,6 +1275,10 @@
         const raw = localStorage.getItem("spouse-points");
         if (!raw) return;
         const data = JSON.parse(raw);
+        const cp = data.customPoints;
+        if (cp && typeof cp === "object" && !Array.isArray(cp)) {
+          state.customPoints = cp;
+        }
         if (data.scores) {
           state.scores = data.scores;
           document.getElementById("score-a").textContent = state.scores.a;
