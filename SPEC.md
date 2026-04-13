@@ -325,17 +325,18 @@ Tied to the debate in **Scoreboard numbers vs. what “points” really are** (a
 The `index.html` prototype is a functional proof of concept for:
 - Award flow with categories and quips
 - Request flow with pending queue and resolution
-- Ledger with entry type tagging
+- Ledger with entry type tagging (primary line = what was noticed; quip on a second line when present)
 - Persistent state via localStorage
+- Fixed per-category point values (`pointValues` map; not randomized)
+- URL-as-state sync packet (`#state=` hash, base64 JSON) with load-time apply and hash strip
+- Messages (`sms:`) handoff after spontaneous award, after request, and after awarding a pending request (with desktop URL-in-toast fallback); pre-filled SMS follows *Core Mechanics* (points, recipient, what was noticed, link — quip stays in-app)
+- Pass dismiss with **no** ledger row (“Not this one”), matching the URL model
 - The emotional tone of the quip writing
 
 What it does not yet capture:
-- Fixed per-category point values (currently randomized 1–3 as a placeholder)
 - Award multiplier (1× / 2× / 3×)
 - Decay
-- Settings page
-- URL-as-state sync packet (hash fragment encoding/decoding)
-- Messages handoff on award and request completion
+- Settings page (names + per-category overrides per `BUILD-v2.md` Step 8)
 - PWA manifest + service worker (installable)
 
 The mock is the right fidelity for now. It's enough to show someone and have a real conversation about whether it works.

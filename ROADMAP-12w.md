@@ -24,9 +24,9 @@
 
 | Week | Build | Ship / verify | Post / surface |
 |------|--------|----------------|----------------|
-| **4** | SMS + link on **request** path (`BUILD-v2` Step 4). | Request → text → partner opens → pending appears. | “Requests are texts. Awards are texts. No ghost awards.” |
-| **5** | **Pass = silent:** no ledger row; clear pending only (`BUILD-v2` Step 5). Soften button copy (“Not this one”). | Pass clears pending; award still logs. | Optional micro-post: **pass is silence** — people who get the spec will get it. |
-| **6** | **1× / 2× / 3×** multiplier on award only; hidden in request mode (`BUILD-v2` Step 6). | Sanity-check points math. | Light humor or comment under week 4: “when they really earned it.” |
+| **4** | SMS + link on **request** path (`BUILD-v2` Step 4); **return SMS** when partner awards pending (`BUILD-v2` Step 5). | Request → text → partner opens → pending appears → award → requester gets link. | “Requests are texts. Awards are texts. No ghost awards.” |
+| **5** | **Pass = silent:** no ledger row; clear pending only (`BUILD-v2` Step 6). Soften button copy (“Not this one”). | Pass clears pending; award still logs. | Optional micro-post: **pass is silence** — people who get the spec will get it. |
+| **6** | **1× / 2× / 3×** multiplier on award only; hidden in request mode (`BUILD-v2` Step 7). | Sanity-check points math. | Light humor or comment under week 4: “when they really earned it.” |
 
 **End of week 6:** Core mechanic story matches `SPEC.md`; you can talk about the product without apologizing for prototype gaps.
 
@@ -36,11 +36,11 @@
 
 | Week | Build | Ship / verify | Post / surface |
 |------|--------|----------------|----------------|
-| **7** | Slide-up **settings:** names centralized if needed; **reset** with double confirm (`BUILD-v2` Step 7, partial). | Rename partners + reset flow. | “We added a nuclear reset. For couples who need a fresh sheet.” |
+| **7** | Slide-up **settings:** names centralized if needed (`BUILD-v2` Step 8, partial). **No** in-app full reset — matches `SPEC.md` *Design choice: In-app reset*. | Rename partners; confirm no wipe-ledger control ships. | Optional: “defaults are theirs to edit” if you post settings at all. |
 | **8** | Optional: per-category **point overrides** in settings (local only; **not** in sync packet per `BUILD-v2`). | Change e.g. coffee → 3, reload, award checks out. | Dev whisper or skip posting — maintenance week. |
-| **9** | **PWA:** `manifest.json`, icons, head meta, `sw.js` cache-first for `./` + `index.html` (`BUILD-v2` Step 8). | Install on iOS + Android; offline open once. | **Second anchor post:** home screen app, no account, no server. |
+| **9** | **PWA:** `manifest.json`, icons, head meta, `sw.js` cache-first for `./` + `index.html` (`BUILD-v2` Step 9). | Install on iOS + Android; offline open once. | **Second anchor post:** home screen app, no account, no server. |
 
-**End of week 9:** Installable, resettable, configurable enough to not feel frozen.
+**End of week 9:** Installable, configurable enough to not feel frozen; couples who need a blank slate use OS-level data removal (same as spec).
 
 ---
 

@@ -78,6 +78,8 @@ function applyPacket(packet) {
 }
 ```
 
+`applyPacket` updates **scores, pending, and names** from the URL only; **local ledger (`state.history`) is unchanged** so the device keeps its private archive (`SPEC.md` merge behavior).
+
 Add to `init()` — check for hash on load, apply and clear:
 ```js
 function checkHashState() {
@@ -94,11 +96,9 @@ function checkHashState() {
 
 ---
 
-### Step 3 — Messages handoff on award
+### Step 3 — Messages handoff on spontaneous award
 
-Replace the `showToast()` call at the end of `awardPoints()` with a function that:
-1. Shows the toast as before
-2. After a short delay (or immediately), opens Messages with the sync link
+Replace the end of `awardPoints()` with: show the toast (quip stays in-app only), then open Messages on mobile with text that matches `SPEC.md` **Core Mechanics → Award Points**: the draft leads with **points**, **recipient**, and **what was noticed** (category + optional detail), then the **sync link** — **not** the quip (quips are for toast / energy; the thread stays a legible record).
 
 ```js
 function openMessages(precomposedText) {
@@ -107,60 +107,80 @@ function openMessages(precomposedText) {
 }
 ```
 
-Award completion:
+Example body (adjust to your string helpers):
+
 ```js
 const url = buildShareURL();
-const recipientName = ...; // already have this
-openMessages(`+${points} to ${recipientName} 🎉 ${url}`);
+const notice = whatNoticed.trim(); // category + optional custom detail
+const body = notice
+  ? `+${points} to ${recipientName} — ${notice} ${url}`
+  : `+${points} to ${recipientName} ${url}`;
 ```
 
-The quip can go in the message body too if it fits naturally.
-
-**Note:** `sms:` scheme works on iOS and Android. On desktop it will fail gracefully — show the URL in the toast instead so it can be copied.
+**Note:** `sms:` works on iOS and Android. On desktop it fails gracefully — show the share URL in the toast (e.g. replace or append `toast-quip` text) so it can be copied.
 
 ```js
 const isMobile = /iPhone|Android/i.test(navigator.userAgent);
 if (isMobile) {
-  openMessages(`+${points} to ${recipientName} 🎉 ${url}`);
+  openMessages(body);
 } else {
-  // show share URL in toast for desktop testing
   document.getElementById("toast-quip").textContent = url;
 }
 ```
 
-**Done when:** awarding points on mobile opens Messages with a pre-filled text containing the sync link.
+**Ledger / SMS hierarchy:** Prefer the same ordering as the ledger’s primary line: recipient + what was noticed + points where it reads naturally; see `SPEC.md` *Ledger vs. quips*.
+
+**Done when:** awarding points on mobile opens Messages with a pre-filled body that includes what was noticed and the sync link, with no quip in the SMS.
 
 ---
 
 ### Step 4 — Messages handoff on request
 
-Same pattern. At the end of `requestPoints()`:
+At the end of `requestPoints()`, after pending is updated and saved, use the same mobile/desktop split as Step 3. Pre-composed text should read as the **request** (what they did / want noticed), then the link — aligned with `SPEC.md` examples (e.g. category + 👀 + link).
 
 ```js
 const url = buildShareURL();
-openMessages(`I did the thing 👀 ${url}`);
+const isMobile = /iPhone|Android/i.test(navigator.userAgent);
+if (isMobile) {
+  setTimeout(() => {
+    openMessages(`${label} 👀 ${url}`);
+  }, 450);
+} else {
+  document.getElementById("toast-quip").textContent = url;
+}
 ```
 
-Pre-compose text can include the category label:
+Variant with explicit credit framing:
+
 ```js
 openMessages(`Credit where it's due: ${label} 👀 ${url}`);
 ```
 
-**Done when:** tapping "Request Points" on mobile opens Messages with the request text and link.
+**Done when:** tapping "Request Points" on mobile opens Messages with the request text and sync link.
 
 ---
 
-### Step 5 — Pass is silent dismiss
+### Step 5 — Messages handoff when partner awards a pending request
 
-In `resolveRequest()`, remove the `passed` ledger entry entirely. Pass just splices the request from `state.pending`, calls `renderPending()` and `saveState()`. No message, no history entry, no toast.
+In `resolveRequest(id, 'award')`, after scores and ledger update, mirror Step 3: toast first, then `openMessages` with **updated** `buildShareURL()` so the requester gets the new scores/pending in one tap. This is the **return** leg in `SPEC.md` (*Request Points* → “celebration text auto-sends… with updated sync link”).
 
-The "Pass" button label can soften to "Not this one" to match the emotional register.
+Use the same SMS template as spontaneous award (points, recipient, what was noticed from the pending item’s label/category, then link; no quip in SMS).
+
+**Done when:** resolving “Award it” on mobile opens Messages with celebration-style copy and the new sync link; desktop shows the URL in the toast.
+
+---
+
+### Step 6 — Pass is silent dismiss
+
+In `resolveRequest()`, remove any `passed` ledger entry. Pass splices the request from `state.pending`, calls `renderPending()` and `saveState()`. No message, no history entry, no toast.
+
+The dismiss button label: **“Not this one”** (see `SPEC.md` Open Question **5**).
 
 **Done when:** passing a request clears it from pending with no outbound message and no ledger entry.
 
 ---
 
-### Step 6 — Award multiplier (1× / 2× / 3×)
+### Step 7 — Award multiplier (1× / 2× / 3×)
 
 Add a multiplier toggle to the award section UI — three small buttons, default 1×:
 
@@ -181,21 +201,21 @@ Hide the multiplier row when in Request mode (multiplier doesn't apply to reques
 
 ---
 
-### Step 7 — Settings panel
+### Step 8 — Settings panel
 
 A slide-up panel (not a separate page) triggered by a gear icon in the header.
 
 Contents:
 - Partner name fields (move from scorecards — or keep both in sync)
 - Point value overrides: number input per category, pre-filled with defaults
-- Reset button: clears scores and history after a double-tap confirmation
+
+**Do not ship** a user-facing **reset scores** or **wipe ledger** in this panel for v1/v2 (`SPEC.md` *Design choice: In-app reset* and *Settings Page*). Starting over is **OS-level** site-data clear / uninstall — intentional friction.
 
 ```html
 <div class="settings-panel" id="settings" style="display:none">
   <h2>Settings</h2>
   <!-- name fields -->
   <!-- point value inputs -->
-  <!-- reset -->
   <button onclick="closeSettings()">Done</button>
 </div>
 ```
@@ -208,7 +228,7 @@ Custom point values go into `saveState()` / `loadState()`. They do **not** go in
 
 ---
 
-### Step 8 — PWA (installable)
+### Step 9 — PWA (installable)
 
 **manifest.json** — create in the same directory as `index.html`:
 ```json
@@ -264,15 +284,15 @@ if ("serviceWorker" in navigator) {
 
 ## Testing Checklist
 
-- [ ] Award points → Messages opens with sync link on mobile
-- [ ] Partner taps link → correct scores and names load → hash clears from URL
+- [ ] Award points → Messages opens with sync link on mobile; SMS body has what was noticed + link, **no quip**
+- [ ] Partner taps link → correct scores and names load → hash clears from URL; local ledger unchanged
 - [ ] Request points → Messages opens with request text and link
-- [ ] Partner taps link → pending request surfaces → Award it → return text sends
+- [ ] Partner taps link → pending request surfaces → Award it → **return** Messages opens with updated sync link (celebration leg)
 - [ ] Pass a request → no message sent, request disappears, no ledger entry
 - [ ] Multiplier doubles/triples point value, resets after award
 - [ ] Settings: name change persists and syncs to toggle labels
 - [ ] Settings: custom point value persists and applies to new awards
-- [ ] Reset: clears scores and history, requires double confirmation
+- [ ] No in-app reset to wipe scores/ledger (verify absent); fresh start only via OS / private window / clear site data
 - [ ] Desktop: SMS handoff degrades gracefully (shows URL in toast)
 - [ ] PWA: installs to home screen on iOS and Android
 - [ ] Offline: app loads after install with no network
@@ -286,6 +306,7 @@ if ("serviceWorker" in navigator) {
 - Accounts or authentication
 - Kids / multi-party mode
 - Any analytics
+- In-app global reset / wipe ledger (by design; see `SPEC.md`)
 
 ---
 

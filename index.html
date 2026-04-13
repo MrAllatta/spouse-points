@@ -789,6 +789,14 @@
 
       clearForm();
       saveState();
+
+      const url = buildShareURL();
+      const isMobile = /iPhone|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        setTimeout(() => openMessages(`${label} 👀 ${url}`), 450);
+      } else {
+        document.getElementById("toast-quip").textContent = url;
+      }
     }
 
     function resolveRequest(id, action) {
@@ -819,20 +827,11 @@
         };
         state.history.unshift(entry);
         renderHistory();
-        showToast(points, quip, request.requesterName);
-      } else {
-        const entry = {
-          id: Date.now(),
-          recipient: request.requesterName,
+        const whatNoticed = ledgerWhatLine({
           category: request.label,
-          quip: "Request noted. Filed quietly.",
-          points: 0,
-          time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
-          requested: true,
-          passed: true,
-        };
-        state.history.unshift(entry);
-        renderHistory();
+          detail: "",
+        });
+        showToastThenSyncMessages(points, quip, request.requesterName, whatNoticed);
       }
 
       renderPending();
@@ -862,11 +861,12 @@
       const url = buildShareURL();
       showToast(points, quip, recipientName);
       const isMobile = /iPhone|Android/i.test(navigator.userAgent);
+      const notice = (whatNoticed || "").trim();
+      const body = notice
+        ? `+${points} to ${recipientName} — ${notice} ${url}`
+        : `+${points} to ${recipientName} ${url}`;
       if (isMobile) {
-        setTimeout(() => {
-          const notice = whatNoticed ? `${whatNoticed} — ` : "";
-          openMessages(`+${points} to ${recipientName} — ${notice}🎉 ${url}`);
-        }, 450);
+        setTimeout(() => openMessages(body), 450);
       } else {
         document.getElementById("toast-quip").textContent = url;
       }
@@ -892,7 +892,7 @@
             </div>
             <div class="resolve-btns">
               <button class="resolve-btn resolve-award" onclick="resolveRequest(${r.id}, 'award')">Award it</button>
-              <button class="resolve-btn resolve-pass" onclick="resolveRequest(${r.id}, 'pass')">Pass</button>
+              <button class="resolve-btn resolve-pass" onclick="resolveRequest(${r.id}, 'pass')">Not this one</button>
             </div>
           </div>`
         )
