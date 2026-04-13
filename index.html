@@ -237,6 +237,11 @@
 
     .result-toast.show { bottom: 2rem; }
 
+    .result-toast.toast-onboarding {
+      border-color: var(--border);
+      border-left: 4px solid var(--accent);
+    }
+
     .result-toast .point-award {
       font-size: 1.6rem;
       font-weight: 700;
@@ -1444,8 +1449,22 @@
       const toast = document.getElementById("toast");
       document.getElementById("toast-points").textContent = `+${points} to ${name}`;
       document.getElementById("toast-quip").textContent = quip;
+      toast.classList.remove("toast-onboarding");
       toast.classList.add("show");
       setTimeout(() => toast.classList.remove("show"), 3500);
+    }
+
+    function showInfoToast(title, body, ms) {
+      const toast = document.getElementById("toast");
+      const dur = ms && ms > 0 ? ms : 4800;
+      document.getElementById("toast-points").textContent = title;
+      document.getElementById("toast-quip").textContent = body;
+      toast.classList.add("toast-onboarding");
+      toast.classList.add("show");
+      setTimeout(() => {
+        toast.classList.remove("show");
+        toast.classList.remove("toast-onboarding");
+      }, dur);
     }
 
     function openMessages(precomposedText) {
@@ -1457,6 +1476,7 @@
       const toast = document.getElementById("toast");
       document.getElementById("toast-points").textContent = `${requesterName} is requesting credit`;
       document.getElementById("toast-quip").textContent = `"${label}" — awaiting acknowledgment.`;
+      toast.classList.remove("toast-onboarding");
       toast.classList.add("show");
       setTimeout(() => toast.classList.remove("show"), 3500);
 
@@ -1627,6 +1647,50 @@
       return String(s || "").trim().toLowerCase();
     }
 
+    function isPlaceholderPartnerName(raw) {
+      const t = normNamePart(raw);
+      if (!t) return true;
+      if (t === "partner a" || t === "partner b") return true;
+      return false;
+    }
+
+    /**
+     * Packet has two real names but neither matches local You/Spouse in either slot
+     * (typos or wrong field) — swap logic cannot orient safely.
+     */
+    function packetNamesMismatchLocal(packet) {
+      const pn = packet.names;
+      if (!pn || typeof pn !== "object") return false;
+      const pa = normNamePart(pn.a);
+      const pb = normNamePart(pn.b);
+      const la = normNamePart(document.getElementById("name-a").value);
+      const lb = normNamePart(document.getElementById("name-b").value);
+      if (!pa || !pb || !la || !lb) return false;
+      if (pa === la && pb === lb) return false;
+      if (pa === lb && pb === la) return false;
+      if (pa === la || pa === lb || pb === la || pb === lb) return false;
+      return true;
+    }
+
+    function maybeShowSyncOnboardingToast(packet) {
+      if (isPlaceholderPartnerName(document.getElementById("name-a").value) ||
+          isPlaceholderPartnerName(document.getElementById("name-b").value)) {
+        showInfoToast(
+          "One quick setup step",
+          "Open Settings (gear) and enter your name under “You,” then your spouse under “Your spouse.” That tells this phone who A and B are after every sync link.",
+          5200
+        );
+        return;
+      }
+      if (packetNamesMismatchLocal(packet)) {
+        showInfoToast(
+          "Names didn’t line up with the link",
+          "Adjust spelling in Settings so Partner A is you on this phone and Partner B is your spouse — match what you use in texts — so scores flip the right way.",
+          5600
+        );
+      }
+    }
+
     /** Each install keeps A = this phone’s user and B = spouse; the sender’s packet may use the same or flipped A/B. */
     function incomingRolesAreOppositeLocal(packet) {
       const pn = packet.names;
@@ -1656,7 +1720,7 @@
     }
 
     function applyPacket(packet) {
-      if (!packet || packet.v !== 1) return;
+      if (!packet || packet.v !== 1) return false;
       let scores = packet.scores;
       let pending = packet.pending || [];
       const swap = incomingRolesAreOppositeLocal(packet);
@@ -1671,13 +1735,14 @@
       syncNames();
       renderPending();
       saveState();
+      return true;
     }
 
     function checkHashState() {
       if (!location.hash.startsWith("#state=")) return;
       try {
         const packet = JSON.parse(atob(location.hash.slice(7)));
-        applyPacket(packet);
+        if (applyPacket(packet)) maybeShowSyncOnboardingToast(packet);
       } catch (e) {}
       history.replaceState(null, "", location.pathname);
     }
