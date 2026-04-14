@@ -385,7 +385,7 @@ Run this gate **before** any wider beta share:
 - [ ] **Exhausted-parent test:** one tired parent gets one prompt ("Use this with your partner"), then completes onboarding + award + request without coaching.
 - [ ] **Pass line:** tester never asks "Wait, what am I supposed to do?"
 
-Status (2026-04-14): Product-side clarity fixes (including desktop copy-first handoff) landed in `index.html`; human exhausted-parent test is still required before wider beta share.
+Status (2026-04-14): Product-side clarity fixes (including desktop copy-first handoff) landed in `index.html`; the multi-select toggle is implemented and currently initializes **on** for fresh local state; human exhausted-parent test is still required before wider beta share.
 
 If any box fails, treat it as a blocker and fix copy/flow before expanding the tester pool.
 
@@ -430,7 +430,7 @@ If any box fails, treat it as a blocker and fix copy/flow before expanding the t
 
 - **Owner outcome:** test whether grouped recognition improves fairness without hurting speed.
 - **Implementation shape (prototype behind toggle):**
-  - Add Settings toggle: **"Enable multi-select awards (beta)"** default **off**.
+  - Settings toggle exists: **"Enable multi-select awards (beta)"**. Current app behavior initializes it **on** for fresh local state; beta decision is whether to keep that default or flip to off.
   - In award mode only, toggle category chips to selected/unselected state; request flow stays single-select.
   - Submit one grouped award: sum selected category points (then multiplier), write one ledger row, compose one SMS line with selected labels + total.
   - Keep one-tap single-select unchanged when toggle is off.

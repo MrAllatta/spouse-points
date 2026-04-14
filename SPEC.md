@@ -354,6 +354,7 @@ The `index.html` prototype is a functional proof of concept for:
 - Default per-category point values (`pointValues` map; not randomized), plus **local overrides** in Settings (`customPoints`; not synced in URL)
 - Award **multiplier** (1× / 2× / 3×) on spontaneous awards only; resets after each award
 - **Settings** slide-up (header gear): you/spouse names, **category CRUD** (reorder / edit / add / delete with pending guard), per-category point inputs, backdrop / Done / Escape to close; names are **in** the `#state=` packet for SMS + orientation; **local** name fields stay yours; overrides stay on-device
+- **Multi-select awards toggle (beta):** optional Settings switch for selecting multiple categories in one award action; grouped awards sum selected category points, then apply multiplier, and send one ledger/SMS line
 - URL-as-state sync packet (`#state=` hash, base64 JSON) with load-time apply, **A/B swap when the sender’s “who is A” differs from this phone**, **onboarding toast** after link open when names are still placeholders or don’t match the packet, and hash strip
 - Messages (`sms:`) handoff after spontaneous award, after request, and after awarding a pending request (with desktop URL-in-toast fallback); pre-filled SMS follows *Core Mechanics* (points, recipient, what was noticed, link — quip stays in-app)
 - Pass dismiss with **no** ledger row (**“Not this one”**), matching the URL model

@@ -44,7 +44,7 @@
 
 **Regression checklist requirement:** before wider beta sharing, run the request/award sync integrity checklist in `BUILD-v2.md` after any sync-flow changes. Treat failures as blockers, not polish.
 
-**Status (2026-04-14):** forced names + no visible A/B language + copy/vocabulary pass + desktop copy-first handoff are implemented in `index.html`; exhausted-parent gate test remains required before wider beta sharing.
+**Status (2026-04-14):** forced names + no visible A/B language + copy/vocabulary pass + desktop copy-first handoff are implemented in `index.html`; the multi-select awards toggle is implemented and currently initializes on for fresh local state; exhausted-parent gate test remains required before wider beta sharing.
 
 **Latest spouse-test input (2026-04-14):** first question was whether multiple items can be clicked in one award action. Treat this as a strong signal to evaluate a multi-select award option after the pre-beta clarity gate; feasibility is medium-high with current category/points model, but must be tested against "quick notice" simplicity.
 
@@ -55,7 +55,7 @@
 - **Blocker 1 (P0 sync integrity):** run a burst-send matrix on real phones and prove newest-link-wins behavior for award-only and mixed award+request bursts.
 - **Required scenarios:** 3 awards burst, awards-then-request burst, mixed request/award burst, and out-of-order link opens.
 - **Release rule:** any stale-state or ordering mismatch is a hard stop; fix apply ordering (stale packet guard via `ts`) and rerun matrix + regression checklist before continuing.
-- **Blocker 2 (multi-select expectation):** prototype optional multi-select awards behind a Settings toggle that defaults off.
+- **Blocker 2 (multi-select expectation):** prototype optional multi-select awards behind a Settings toggle (implemented; current default initializes on). Decide default-on vs default-off from fairness/speed evidence.
 - **Evaluation rule:** compare single-select vs multi-select for send speed and felt fairness in the same week; keep off by default unless fairness signal is clearly better without meaningful speed loss.
 - **Documentation rule:** record outcomes in `BUILD-v2.md` pre-beta section so beta go/no-go is evidence-backed, not memory-backed.
 
