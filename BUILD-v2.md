@@ -389,6 +389,26 @@ Status (2026-04-14): Product-side clarity fixes (including desktop copy-first ha
 
 If any box fails, treat it as a blocker and fix copy/flow before expanding the tester pool.
 
+### Spouse test observations (2026-04-14)
+
+- **First question asked:** "Can I click multiple items to award points?"
+- **Interpretation:** Tester expectation leans toward batch recognition in one action, not one category per tap.
+- **Feasibility (product + implementation):** **Medium-high.** Current data model already has stable category keys and point resolution per key, so a multi-select award mode is additive rather than a rewrite.
+- **Main implementation shape (if prioritized):**
+  - Add multi-select state for award categories (request flow unchanged).
+  - Award as one grouped action that sums selected category points (respect multiplier behavior rules).
+  - Ledger/SMS should stay human-readable by listing selected labels, then total points and sync link.
+  - Keep existing single-select as default or fallback to preserve low-friction one-tap flow.
+- **Risks to validate:** More taps/choices could add cognitive load and make "quick notice" feel heavier; test whether grouped selection improves felt fairness without slowing use.
+
+### Open sync-order question (2026-04-14)
+
+- **Question to validate:** What happens when multiple awards and a request are sent before spouse accepts any link?
+- **Desired behavior:** Every newly generated outbound link should capture the sender's current full state at that moment (scores + pending), so the receiver can tap only the most recent message and be fully caught up.
+- **Why this matters:** Real threads are bursty; requiring the receiver to open several older links in sequence creates confusion and stale-state risk.
+- **Verification target:** Confirm request creation after one or more unsynced awards still serializes current sender state into `#state=`; receiver applying only the latest link lands on the same state as replaying all prior links.
+- **If mismatch appears:** Treat as release-blocking sync integrity bug and fix packet generation/apply ordering before wider beta.
+
 ### Beta tester interview questions (required)
 
 Ask questions that hurt slightly:

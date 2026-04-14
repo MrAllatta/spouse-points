@@ -46,6 +46,10 @@
 
 **Status (2026-04-14):** forced names + no visible A/B language + copy/vocabulary pass + desktop copy-first handoff are implemented in `index.html`; exhausted-parent gate test remains required before wider beta sharing.
 
+**Latest spouse-test input (2026-04-14):** first question was whether multiple items can be clicked in one award action. Treat this as a strong signal to evaluate a multi-select award option after the pre-beta clarity gate; feasibility is medium-high with current category/points model, but must be tested against "quick notice" simplicity.
+
+**Latest planning question (2026-04-14):** validate burst-send sync semantics: if multiple awards and then a request are sent before partner opens any message, the newest link should include sender-current state so receiver can open only the latest message and still land fully up to date.
+
 ---
 
 ## Weeks 1–3 — Make it shareable (non-negotiable)
