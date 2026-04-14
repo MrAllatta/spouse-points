@@ -1194,6 +1194,7 @@
       microMomentPending: false,
       betaMultiSelectAwards: true,
       nameSetupHintShown: false,
+      messageAppOnboardingShown: false,
       lastAppliedPacketTs: 0,
     };
     let infoToastTimer = null;
@@ -1548,6 +1549,14 @@
     }
 
     function maybeShowPostNameMicroMoment() {
+      if (!state.messageAppOnboardingShown && namesAreReady()) {
+        showInfoToast(
+          "Heads up",
+          "After setup, we'll open your Messages app so you can text your partner each points award or request.",
+          5600
+        );
+        state.messageAppOnboardingShown = true;
+      }
       if (state.microMomentShown) return;
       if (!namesAreReady()) return;
       state.microMomentShown = true;
@@ -1962,6 +1971,7 @@
         microMomentPending: state.microMomentPending,
         betaMultiSelectAwards: state.betaMultiSelectAwards,
         nameSetupHintShown: state.nameSetupHintShown,
+        messageAppOnboardingShown: state.messageAppOnboardingShown,
         lastAppliedPacketTs: state.lastAppliedPacketTs,
         names: {
           a: document.getElementById("name-a").value,
@@ -2032,6 +2042,11 @@
           state.nameSetupHintShown = data.nameSetupHintShown;
         } else {
           state.nameSetupHintShown = false;
+        }
+        if (typeof data.messageAppOnboardingShown === "boolean") {
+          state.messageAppOnboardingShown = data.messageAppOnboardingShown;
+        } else {
+          state.messageAppOnboardingShown = false;
         }
         if (typeof data.lastAppliedPacketTs === "number" && Number.isFinite(data.lastAppliedPacketTs)) {
           state.lastAppliedPacketTs = data.lastAppliedPacketTs;
