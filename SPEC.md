@@ -4,6 +4,19 @@ A **mirror** for two people: domestic labor and emotional effort made visible, n
 
 > "A little scoreboard helps us laugh while we learn to notice each other."
 
+## Courtroom Test (North Star Constraint)
+
+The app must never feel more "real" than the relationship.
+
+If at any point:
+- points feel authoritative
+- logs feel like evidence
+- the system feels like truth
+
+then we have built a courtroom, not a joke.
+
+This test overrides feature cleverness. If a change increases legibility for conflict, adjudication, or "proving who is right" more than it increases warmth, humor, and noticing, reject or redesign it.
+
 ---
 
 ## What This Is (and Isn't)

@@ -16,9 +16,15 @@
 
 **Required product changes before recruiting testers:**
 - **Forced name onboarding:** block award/request actions until both local names are set (you + spouse). This is not optional setup chrome.
+- **Post-name micro-moment + immediate action:** right after names are entered, show only:
+  - "This isn't a real score."
+  - "It's just a way to notice each other more."
+  Then immediately route to a clear tappable action so they *do*, not read.
 - **No visible A/B language:** keep slotting internals for sync logic, but remove A/B wording from UI copy and SMS body.
 - **Caveman copy pass:** simplify action labels and helper text to plain one-step language (e.g., "I noticed you did X", "I did X, notice me", "Give points", "Not this one").
 - **One-message vocabulary:** the same plain-language frame must appear in button labels, toasts, and precomposed SMS text.
+- **No lecture copy:** avoid onboarding philosophy blocks or manifesto-style explanation; first-use should stay short and action-first.
+- **Request/award visibility integrity:** after request send, do not show awarded state on the request sender's UI. Awarded state must appear on the receiver first and only propagate back when the receiver completes award + return sync.
 - **Desktop handoff strategy:** detect non-mobile and switch from `sms:` auto-open to copy-first UX. Do not auto-open Messages on desktop; show "Copy this and send it to [Name]" and a large **Copy Message** button.
 
 **Gate test (single exhausted parent):**
@@ -26,6 +32,15 @@
 - Observe first-use path: onboarding, award, request, and SMS handoff.
 - **Pass condition:** they do **not** ask, "Wait, what am I supposed to do?"
 - **Fail condition:** any confusion on core loop intent or next action blocks wider beta until fixed.
+
+**Beta tester interview questions (ask directly):**
+- "When did this feel annoying?"
+- "Did you ever not want to send points?"
+- "Did anything feel unfair or weirdly real?"
+- "Would you keep using this if I didn't ask you to?"
+- "Did this make you notice me more, or just the app more?"
+
+**Interpretation rule:** if answers lean toward "I noticed the app more," quietly panic and adjust. That means we are drifting from mirror-to-relationship toward app-as-center.
 
 **Status (2026-04-14):** forced names + no visible A/B language + copy/vocabulary pass + desktop copy-first handoff are implemented in `index.html`; exhausted-parent gate test remains required before wider beta sharing.
 

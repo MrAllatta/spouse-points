@@ -369,9 +369,15 @@ if ("serviceWorker" in navigator) {
 Run this gate **before** any wider beta share:
 
 - [x] **Forced names:** first-run requires both names before award/request can be submitted.
+- [ ] **Post-name micro-moment:** immediately after both names are entered, show only:
+  - "This isn't a real score."
+  - "It's just a way to notice each other more."
+  Then move straight to a tappable next action so they experience the loop right away.
 - [x] **No visible A/B copy:** UI and SMS contain no "Partner A/B" language (internal slotting remains implementation detail only).
 - [x] **Caveman copy sweep:** action labels and helper text are plain enough for low-energy use.
 - [x] **Vocabulary consistency:** same conceptual phrasing across buttons, toasts, ledger labels, and SMS drafts.
+- [ ] **No lecture copy:** onboarding text stays to the two-line micro-moment only; no philosophy paragraph or manifesto framing.
+- [ ] **Request/award visibility fix:** after sending a request, an award must not appear on the request sender's UI preemptively. Award confirmation should appear only on the receiver's UI first, then on the sender only after the receiver awards and the return sync link is applied.
 - [x] **Desktop handoff strategy:** detect non-mobile and switch from `sms:` auto-open to copy-first UX:
   - no auto-open Messages on desktop
   - show: "Copy this and send it to [Name]"
@@ -382,6 +388,19 @@ Run this gate **before** any wider beta share:
 Status (2026-04-14): Product-side clarity fixes (including desktop copy-first handoff) landed in `index.html`; human exhausted-parent test is still required before wider beta share.
 
 If any box fails, treat it as a blocker and fix copy/flow before expanding the tester pool.
+
+### Beta tester interview questions (required)
+
+Ask questions that hurt slightly:
+- "When did this feel annoying?"
+- "Did you ever not want to send points?"
+- "Did anything feel unfair or weirdly real?"
+- "Would you keep using this if I didn't ask you to?"
+
+And the big one:
+- "Did this make you notice me more, or just the app more?"
+
+If the answer trends toward "just the app more," quietly panic and adjust before widening usage. Treat that as a north-star signal, not a minor preference.
 
 ---
 
