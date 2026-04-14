@@ -409,6 +409,14 @@ If any box fails, treat it as a blocker and fix copy/flow before expanding the t
 - **Verification target:** Confirm request creation after one or more unsynced awards still serializes current sender state into `#state=`; receiver applying only the latest link lands on the same state as replaying all prior links.
 - **If mismatch appears:** Treat as release-blocking sync integrity bug and fix packet generation/apply ordering before wider beta.
 
+### Post–v2 launch field report — totals vs ledger (2026-04-14)
+
+- **Reported experience:** Partner **opened an incoming sync link**; **running point totals updated**; the **ledger / history list did not** show matching new rows for that activity.
+- **Spec cross-check first:** `SPEC.md` states the sync packet carries **`scores` + `pending` only**; **`history` is local and is not transmitted**. A link-only apply can therefore move totals **without** appending ledger rows. Do not assume an implementation bug until the scenario is classified.
+- **Next tests (pick the branch that matches what actually happened):**
+  - **A — Link-only receiver:** If the only action was “open partner’s `#state=` link,” decide whether the gap is **expected by design** vs a **UX / copy** problem (people assume the ledger mirrors the thread). Capture whether `pending` looked correct when totals moved.
+  - **B — Local action bug:** If the receiver (or sender) performed an **award / resolve** that should have called the normal `history` write path **on that same device** and the ledger still failed to update while totals changed, treat as a **defect candidate**: file repro with devices, OS/browser, build/commit, screenshots, and decoded packet (`scores`, `pending`, `ts`).
+
 ### Pre-beta blocker execution plan (2026-04-14)
 
 #### Blocker A (P0): burst-send sync-order semantics
@@ -487,6 +495,24 @@ Use this as the pre-beta evidence log. Fill date/owner/device details as you exe
 - [ ] Multi-select decision documented with evidence
 - [ ] Regression checklist in this doc re-run after any sync/order fix
 - [ ] Final decision: `GO wider beta` / `NO-GO`
+
+### Recommended testing suite: hashed `#state=` in Messages
+
+**Why:** Sync bugs and “totals moved but ledger didn’t” reports almost always need the **actual URL** decoded — guessing from UI alone is unreliable. This file has **no Jest/Vitest harness** (single-file vanilla constraint); the suite below is the **supported** way to investigate `#state=` end to end.
+
+**Run the suite in this order:**
+
+| Step | What to do | Pass signal |
+|------|----------------|-------------|
+| **1. Environment** | Same commit/build on sender + receiver; two profiles, two browsers, or two phones. Clear or isolate `localStorage` when you need a clean baseline (`SPEC.md` *Testing without a product reset*). | No silent mismatch from stale cached shell vs new `index.html`. |
+| **2. Baseline sync** | Single award or single request → one link → receiver opens it. | Decoded `scores` / `pending` match receiver UI after apply; location **hash stripped**; `lastAppliedPacketTs` (if inspecting storage) respects packet `ts`. |
+| **3. Decode every link** | For each message under test, copy the **full URL** and run the **Decode packet quickly** snippet below *before* arguing about ordering. | Console output matches sender state at send time; burst runs preserve **monotonic `ts`** on newly generated links. |
+| **4. Burst / ordering** | Execute **A1–A4** in *Pre-beta blocker execution plan*; keep screenshots + decoded payloads as evidence. | Newest-link-wins for A1–A3; opening an older link after a newer apply does **not** roll back state (stale guard). |
+| **5. Couple loop integrity** | Run **Regression checklist (request/award sync integrity)**. | No premature scores on requester; award lands on resolver first; pass stays silent. |
+| **6. Malformed packets** | Truncate `#state=`, flip `v`, drop `scores.a`, inject `NaN` — paste into hash navigation on a throwaway tab. | Apply rejects packet; prior good `localStorage` state unchanged (week-12 hardening spot-check; see `ROADMAP-12w.md`). |
+| **7. Ledger vs totals** | Classify reports using `SPEC.md` *Field note* + *Post–v2 launch field report* here: link-only vs local-action bug. | Bug tickets include **devices, build, steps, and decoded packet**. |
+
+Subsections below (**Decode packet quickly**, **Pre-beta blocker execution plan**, **Regression checklist**) are the **executable** parts of this suite; the execution checklist template is the **audit log**.
 
 ### Decode packet quickly (helper)
 

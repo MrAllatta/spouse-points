@@ -220,6 +220,8 @@ The `#` (fragment) is never sent to the server. GitHub Pages serves the HTML; it
 
 History stays on-device and is never transmitted. It's a private local archive.
 
+**Field note (2026-04-14, post–v2 launch):** One real usage report: after opening a partner’s link, **totals updated** but the **on-device ledger** did not gain rows that “explain” the partner-side activity. Before treating that as a code bug, classify it against the paragraph above: `#state=` applies **scores + pending**, not `history`, so **link-only apply can change totals without new ledger lines**. If the discomfort is “I expected my ledger to mirror what they did,” that is primarily a **product / expectations** question (copy, empty state, education, or a future policy change), not necessarily a sync defect. If the report is instead “I awarded or resolved something on **this** phone and **history stayed empty while totals moved**,” capture a step-by-step repro (devices, build, decoded packet) and treat that as a true defect candidate.
+
 **What stays out of the sync packet (on purpose):** Per-device **settings** — custom **point overrides**, the **editable category catalog** (emoji / label / order / user-added rows), and any future decay toggles. Same rationale as overrides: keeps URLs small, avoids packet version churn, and allows each partner to keep a personal grid if they want. **Cross-partner legibility** still works because pending items carry a human-readable **`label`** (and a stable `category` key for scoring on the resolver’s device); if the resolver has never seen that key, scoring falls back to defaults and quips fall back to the generic **custom** pool until they add a matching row locally.
 
 **On tap:** app reads the fragment, merges into localStorage (URL scores and pending win, local history is preserved), clears the hash. localStorage takes over from that point.
@@ -231,6 +233,15 @@ History stays on-device and is never transmitted. It's a private local archive.
 **The text thread is the commit log.** Each link encodes the state at that moment. Scroll back through the thread and you can see the ledger's history. This is a little beautiful and also ridiculous, which is right.
 
 **Burst-send ordering policy (pre-beta blocker):** in real usage, partners will send multiple messages before the other person opens any link. Product expectation is **newest-link-wins**: opening only the most recent link should land the receiver on sender-current `scores` + `pending` without requiring replay of older links. Pre-beta must validate this on-device for award-only bursts and mixed award/request bursts. If out-of-order opens can regress state, the client should treat packet `ts` as a stale-guard and ignore older packets after a newer one has been applied.
+
+**Recommended testing suite (investigating hashed `#state=` in Messages):** the app has **no npm / automated runner** for sync; treat investigation as a **small manual lab**. Use it to separate **implementation bugs** from **intentional packet shape** (`scores` + `pending` + `names` + `ts` only — no `history` on the wire).
+
+1. **Two contexts** — second browser profile, private window vs normal, or two phones on the **same build**. Label one sender, one receiver; avoid mixing cached PWA shells with different `index.html` revisions.
+2. **Capture the wire artifact** — copy the **full URL** from the SMS/iMessage body (or the desktop handoff copy box). The payload lives in the **hash** (`#state=…`); it is **not** visible in server access logs.
+3. **Decode before tap** — in DevTools console on the app origin, `JSON.parse(atob(…))` the fragment after `#state=` (full one-liner and pretty-print fields: `BUILD-v2.md` *Recommended testing suite → Decode packet quickly*). Compare `scores`, `pending`, `names`, and `ts` to what the sender’s UI showed **at send time**.
+4. **Apply and diff** — open the link on the receiver; confirm the address bar **hash clears** after load. In **Application → Local Storage**, inspect the persisted blob: receiver **scores** and **pending** should match the decoded packet (after any A/B swap the client applies). **Ledger rows** are allowed to stay unchanged on a **pure link receive**; that is spec-by-design, not automatically a bug.
+5. **Ordering and stale guards** — for burst threads, capture **each** generated URL, decode each packet, and order by `ts`. Run the **A1–A4** matrix and the **regression checklist** in `BUILD-v2.md` (*Recommended testing suite* + *Pre-beta blocker execution plan* + *Regression checklist*). Failures where an **older** `ts` overwrites a **newer** applied state are release-blocking.
+6. **Edge payloads** — manually try truncated base64, wrong `v`, missing `scores`, and non-finite numbers; the client should **refuse the packet** without bricking stored state (see `ROADMAP-12w.md` week 12 hardening cadence).
 
 **URL length:** ~600 characters with a typical pending queue. iMessage renders it as a preview card, not a wall of text.
 
@@ -363,7 +374,7 @@ The `index.html` prototype is a functional proof of concept for:
 
 What it does not yet capture:
 - Decay (read-time half-life model is spec’d only)
-- Broader **device QA** (more phones, offline edge cases, bad `#state=` payloads — see `ROADMAP-12w.md` week 12 / `BUILD-v2.md` testing checklist)
+- Broader **device QA** (more phones, offline edge cases, bad `#state=` payloads — see `ROADMAP-12w.md` week 12, `SPEC.md` *Recommended testing suite (investigating hashed `#state=` in Messages)*, and `BUILD-v2.md` *Recommended testing suite: hashed `#state=` in Messages*)
 
 The mock is the right fidelity for now. It's enough to show someone and have a real conversation about whether it works.
 

@@ -48,6 +48,8 @@
 
 **Latest spouse-test input (2026-04-14):** first question was whether multiple items can be clicked in one award action. Treat this as a strong signal to evaluate a multi-select award option after the pre-beta clarity gate; feasibility is medium-high with current category/points model, but must be tested against "quick notice" simplicity.
 
+**Post–v2 launch field note (2026-04-14):** real-world report after receiving a sync link — **point totals updated**, **ledger did not** show corresponding new rows. Needs retesting to separate **intentional model** (`#state=` applies scores + pending only; `history` stays on-device per `SPEC.md`) from a **real UI / persist bug** if a local award or resolve should have written `history` on that device. See `BUILD-v2.md` *Post–v2 launch field report — totals vs ledger*.
+
 **Latest planning question (2026-04-14):** validate burst-send sync semantics: if multiple awards and then a request are sent before partner opens any message, the newest link should include sender-current state so receiver can open only the latest message and still land fully up to date.
 
 ### Immediate pre-beta blocker plan (must complete before wider tester pool)
@@ -103,7 +105,7 @@
 |------|--------|----------------|----------------|
 | **10** | Footer or settings: **“Support the bit”** → Ko-fi, Stripe Payment Link, or Buy Me a Coffee (pick one). | Tap-through on mobile; fees acceptable. | One line in a longer piece, or footer-only for a week — no guilt framing. |
 | **11** | **PWYW one-pager PDF** (fridge rules + blank lines) or fastest printable “kitchen ledger” — same tip platform or Gumroad. | You would complete checkout in under 60 seconds. | “If you want paper, we made paper.” |
-| **12** | **Hardening:** bad `#state=` hash, long payload, desktop SMS path, empty states, copy pass. | Run `BUILD-v2.md` testing checklist for shipped scope. | **Quarter recap:** what it is, what it isn’t, link, tip — optional invite (“weirdest category idea”). |
+| **12** | **Hardening:** bad `#state=` hash, long payload, desktop SMS path, empty states, copy pass. | Run `BUILD-v2.md` **Recommended testing suite: hashed `#state=` in Messages** (matrix + decode helper + regression checklist); condensed lab steps in `SPEC.md` under the same topic. | **Quarter recap:** what it is, what it isn’t, link, tip — optional invite (“weirdest category idea”). |
 
 **End of week 12:** Shareable PWA + one soft revenue path + twelve weeks of proof you can show up without a second viral hit.
 
