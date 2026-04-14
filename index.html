@@ -849,7 +849,7 @@
       <div class="header-spacer" aria-hidden="true"></div>
       <div class="header-center">
         <h1>Spouse Points</h1>
-        <p class="tagline">A little scoreboard helps us laugh while we learn to notice each other.</p>
+        <p class="tagline">Notice each other. Keep it moving.</p>
       </div>
       <button type="button" class="settings-gear" onclick="openSettings()" aria-label="Open settings">⚙</button>
     </div>
@@ -912,7 +912,7 @@
   <div class="settings-backdrop" id="settings-backdrop" onclick="closeSettings()"></div>
   <div class="settings-panel" id="settings-panel" onclick="event.stopPropagation()">
     <h2>Settings</h2>
-    <p class="settings-hint">Each install is one phone: this phone is <strong>you</strong>, and the other score is your spouse. Names and scores travel in share links; point overrides and categories stay on this device only.</p>
+    <p class="settings-hint">This phone is you. The other score is your spouse. Set names once, then use the buttons.</p>
 
     <div class="settings-names">
       <div>
@@ -929,7 +929,7 @@
 
     <div class="settings-section-title">Categories</div>
     <p class="settings-hint" style="margin-top:-0.35rem;margin-bottom:0.65rem">
-      Reorder, edit, or add rows. New categories use the same playful quips as “Custom” until we add per-category lines. Freeform awards still use the custom base points below.
+      Reorder, edit, or add rows. New rows use the Custom quip set for now.
     </p>
     <button type="button" class="settings-add-cat" onclick="addUserCategory()">+ Add category</button>
     <div id="settings-categories-editor"></div>
@@ -1091,7 +1091,10 @@
       pending: [],
       customPoints: {},
       categories: [],
+      microMomentShown: null,
+      nameSetupHintShown: false,
     };
+    let infoToastTimer = null;
 
     function cloneDefaultCategories() {
       return DEFAULT_CATEGORIES.map((c) => ({ ...c }));
@@ -1275,6 +1278,19 @@
       document.getElementById("name-a").addEventListener("input", syncNames);
       document.getElementById("name-b").addEventListener("input", syncNames);
 
+      if (!namesAreReady() && !state.nameSetupHintShown) {
+        showInfoToast(
+          "Start in Settings",
+          "Tap the gear and enter both names first. Then Give Points will unlock.",
+          0
+        );
+      }
+
+      if (state.microMomentShown === null) {
+        state.microMomentShown = namesAreReady();
+        saveState();
+      }
+
       document.addEventListener("keydown", (e) => {
         if (e.key !== "Escape") return;
         const panel = document.getElementById("settings-panel");
@@ -1302,6 +1318,11 @@
     }
 
     function openSettings() {
+      if (!namesAreReady() && !state.nameSetupHintShown) {
+        state.nameSetupHintShown = true;
+        saveState();
+        hideInfoToast();
+      }
       renderSettingsCategoryEditor();
       syncCustomPointsInputFromState();
       document.getElementById("settings-backdrop").classList.add("open");
@@ -1350,7 +1371,7 @@
       if (namesAreReady()) return true;
       showInfoToast(
         "Add names first",
-        "Open Settings and enter your name plus your spouse's name before sending points or requests.",
+        "Open Settings and add both names first.",
         5200
       );
       openSettings();
@@ -1370,13 +1391,13 @@
       const me = (document.getElementById("name-a").value || "").trim() || "you";
       const spouse = (document.getElementById("name-b").value || "").trim() || "your spouse";
       if (!namesAreReady()) {
-        el.textContent = "First run: open Settings, add both names, then send points or requests.";
+        el.textContent = "Open Settings and add both names first.";
         return;
       }
       if (state.mode === "award") {
-        el.textContent = `You are ${me} on this phone. Tap one item, then Give Points to ${spouse}.`;
+        el.textContent = `Tap one item, then Give Points to ${spouse}.`;
       } else {
-        el.textContent = `You are ${me} on this phone. Ask for notice, then text the link so ${spouse} can respond.`;
+        el.textContent = `Pick what you did, then Send Request to ${spouse}.`;
       }
     }
 
@@ -1387,9 +1408,24 @@
       const dispB = document.getElementById("display-name-b");
       if (dispA) dispA.textContent = a;
       if (dispB) dispB.textContent = b;
+      maybeShowPostNameMicroMoment();
       updateRoleHint();
       updateSubmitState();
       saveState();
+    }
+
+    function maybeShowPostNameMicroMoment() {
+      if (state.microMomentShown) return;
+      if (!namesAreReady()) return;
+      state.microMomentShown = true;
+      setMode("award");
+      showInfoToast(
+        "This isn't a real score.",
+        "It's just a way to notice each other more.",
+        5600
+      );
+      const firstCategory = document.querySelector("#categories .category-btn");
+      if (firstCategory && typeof firstCategory.focus === "function") firstCategory.focus();
     }
 
     function setMode(mode) {
@@ -1508,6 +1544,9 @@
       const idx = state.pending.findIndex((r) => r.id === id);
       if (idx === -1) return;
       const request = state.pending[idx];
+      if (action === "award" && request.requester !== "b") {
+        return;
+      }
       state.pending.splice(idx, 1);
 
       if (action === "award") {
@@ -1559,16 +1598,30 @@
       setTimeout(() => toast.classList.remove("show"), 3500);
     }
 
+    function hideInfoToast() {
+      const toast = document.getElementById("toast");
+      if (infoToastTimer) {
+        clearTimeout(infoToastTimer);
+        infoToastTimer = null;
+      }
+      toast.classList.remove("show");
+      toast.classList.remove("toast-onboarding");
+    }
+
     function showInfoToast(title, body, ms) {
       const toast = document.getElementById("toast");
-      const dur = ms && ms > 0 ? ms : 4800;
       document.getElementById("toast-points").textContent = title;
       document.getElementById("toast-quip").textContent = body;
+      if (infoToastTimer) {
+        clearTimeout(infoToastTimer);
+        infoToastTimer = null;
+      }
       toast.classList.add("toast-onboarding");
       toast.classList.add("show");
-      setTimeout(() => {
-        toast.classList.remove("show");
-        toast.classList.remove("toast-onboarding");
+      if (ms === 0) return;
+      const dur = ms && ms > 0 ? ms : 4800;
+      infoToastTimer = setTimeout(() => {
+        hideInfoToast();
       }, dur);
     }
 
@@ -1628,11 +1681,12 @@
       const url = buildShareURL();
       const isMobile = isMobileDevice();
       const body = `Can you notice this one? "${label}" ${url}`;
+      const spouseName = document.getElementById("name-b").value || "your partner";
       if (isMobile) {
         hideDesktopHandoff();
         setTimeout(() => openMessages(body), 450);
       } else {
-        showDesktopHandoff(body, "your partner");
+        showDesktopHandoff(body, spouseName);
       }
     }
 
@@ -1670,10 +1724,14 @@
               <div class="pending-label">${r.label}</div>
               <div class="pending-quip">${r.quip}</div>
             </div>
-            <div class="resolve-btns">
-              <button class="resolve-btn resolve-award" onclick="resolveRequest(${r.id}, 'award')">Give points</button>
-              <button class="resolve-btn resolve-pass" onclick="resolveRequest(${r.id}, 'pass')">Not this one</button>
-            </div>
+            ${
+              r.requester === "b"
+                ? `<div class="resolve-btns">
+                    <button class="resolve-btn resolve-award" onclick="resolveRequest(${r.id}, 'award')">Give points</button>
+                    <button class="resolve-btn resolve-pass" onclick="resolveRequest(${r.id}, 'pass')">Not this one</button>
+                  </div>`
+                : `<div class="pending-quip">Sent. Waiting for your partner to respond.</div>`
+            }
           </div>`
         )
         .join("");
@@ -1718,6 +1776,8 @@
         pending: state.pending,
         customPoints: state.customPoints,
         categories: state.categories,
+        microMomentShown: state.microMomentShown,
+        nameSetupHintShown: state.nameSetupHintShown,
         names: {
           a: document.getElementById("name-a").value,
           b: document.getElementById("name-b").value,
@@ -1767,6 +1827,16 @@
         if (data.pending) {
           state.pending = data.pending;
           renderPending();
+        }
+        if (typeof data.microMomentShown === "boolean") {
+          state.microMomentShown = data.microMomentShown;
+        } else {
+          state.microMomentShown = null;
+        }
+        if (typeof data.nameSetupHintShown === "boolean") {
+          state.nameSetupHintShown = data.nameSetupHintShown;
+        } else {
+          state.nameSetupHintShown = false;
         }
       } catch (e) {
         if (!state.categories || !state.categories.length) state.categories = cloneDefaultCategories();
