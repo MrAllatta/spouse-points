@@ -801,22 +801,22 @@
 
   <div class="scoreboard">
     <div class="score-card">
-      <div class="name-display" id="display-name-a">PARTNER A</div>
+      <div class="name-display" id="display-name-a">YOU</div>
       <div class="points" id="score-a">0</div>
     </div>
     <div class="score-card">
-      <div class="name-display" id="display-name-b">PARTNER B</div>
+      <div class="name-display" id="display-name-b">YOUR SPOUSE</div>
       <div class="points" id="score-b">0</div>
     </div>
   </div>
 
   <div class="award-section">
     <div class="mode-toggle">
-      <button class="mode-btn active" id="mode-award" onclick="setMode('award')">Award Points</button>
-      <button class="mode-btn" id="mode-request" onclick="setMode('request')">Request Points</button>
+      <button class="mode-btn active" id="mode-award" onclick="setMode('award')">Notice Partner</button>
+      <button class="mode-btn" id="mode-request" onclick="setMode('request')">Ask for Notice</button>
     </div>
 
-    <h2 id="section-heading">Award Points</h2>
+    <h2 id="section-heading">Notice Your Partner</h2>
 
     <p class="role-hint" id="role-hint" aria-live="polite"></p>
 
@@ -831,7 +831,7 @@
     <textarea class="custom-reason" id="custom-reason" rows="2"
               placeholder="Or write your own reason..."></textarea>
 
-    <button class="award-btn" id="submit-btn" onclick="handleSubmit()">Award Points</button>
+    <button class="award-btn" id="submit-btn" onclick="handleSubmit()">Give Points</button>
   </div>
 
   <div class="pending-section" id="pending-section" style="display:none">
@@ -844,7 +844,7 @@
   <div class="history">
     <h3>The Ledger</h3>
     <div id="history-list">
-      <div class="history-empty">No points awarded yet. Someone must have done something.</div>
+      <div class="history-empty">No notices yet. Start with one thing your partner did.</div>
     </div>
   </div>
 
@@ -856,17 +856,17 @@
   <div class="settings-backdrop" id="settings-backdrop" onclick="closeSettings()"></div>
   <div class="settings-panel" id="settings-panel" onclick="event.stopPropagation()">
     <h2>Settings</h2>
-    <p class="settings-hint">Each install is one phone: Partner A is <strong>you</strong> on this device; Partner B is your spouse. Names and scores travel in share links; point overrides and categories stay on this device only.</p>
+    <p class="settings-hint">Each install is one phone: this phone is <strong>you</strong>, and the other score is your spouse. Names and scores travel in share links; point overrides and categories stay on this device only.</p>
 
     <div class="settings-names">
       <div>
-        <label class="settings-field-label" for="name-a">You (Partner A)</label>
-        <input class="settings-name-input" id="name-a" value="PARTNER A" maxlength="16"
+        <label class="settings-field-label" for="name-a">Your name</label>
+        <input class="settings-name-input" id="name-a" value="" maxlength="16"
                onfocus="this.select()" />
       </div>
       <div>
-        <label class="settings-field-label" for="name-b">Your spouse (Partner B)</label>
-        <input class="settings-name-input" id="name-b" value="PARTNER B" maxlength="16"
+        <label class="settings-field-label" for="name-b">Your spouse's name</label>
+        <input class="settings-name-input" id="name-b" value="" maxlength="16"
                onfocus="this.select()" />
       </div>
     </div>
@@ -1266,26 +1266,65 @@
       syncNames();
     }
 
+    function getNameFields() {
+      return {
+        me: document.getElementById("name-a"),
+        spouse: document.getElementById("name-b"),
+      };
+    }
+
+    function namesAreReady() {
+      const { me, spouse } = getNameFields();
+      const meName = (me?.value || "").trim();
+      const spouseName = (spouse?.value || "").trim();
+      if (!meName || !spouseName) return false;
+      if (isPlaceholderPartnerName(meName) || isPlaceholderPartnerName(spouseName)) return false;
+      return true;
+    }
+
+    function requireNamesForAction() {
+      if (namesAreReady()) return true;
+      showInfoToast(
+        "Add names first",
+        "Open Settings and enter your name plus your spouse's name before sending points or requests.",
+        5200
+      );
+      openSettings();
+      return false;
+    }
+
+    function updateSubmitState() {
+      const btn = document.getElementById("submit-btn");
+      if (!btn) return;
+      btn.disabled = !namesAreReady();
+      btn.title = btn.disabled ? "Add both names in Settings first." : "";
+    }
+
     function updateRoleHint() {
       const el = document.getElementById("role-hint");
       if (!el) return;
       const me = (document.getElementById("name-a").value || "").trim() || "you";
       const spouse = (document.getElementById("name-b").value || "").trim() || "your spouse";
+      if (!namesAreReady()) {
+        el.textContent = "First run: open Settings, add both names, then send points or requests.";
+        return;
+      }
       if (state.mode === "award") {
-        el.textContent = `You’re on this phone as ${me}. Awards always go to ${spouse}.`;
+        el.textContent = `You are ${me} on this phone. Tap one item, then Give Points to ${spouse}.`;
       } else {
-        el.textContent = `You’re on this phone as ${me}. Requests are for you; ${spouse} sees them when they open your link.`;
+        el.textContent = `You are ${me} on this phone. Ask for notice, then text the link so ${spouse} can respond.`;
       }
     }
 
     function syncNames() {
-      const a = document.getElementById("name-a").value || "Partner A";
-      const b = document.getElementById("name-b").value || "Partner B";
+      const a = document.getElementById("name-a").value || "You";
+      const b = document.getElementById("name-b").value || "Your spouse";
       const dispA = document.getElementById("display-name-a");
       const dispB = document.getElementById("display-name-b");
       if (dispA) dispA.textContent = a;
       if (dispB) dispB.textContent = b;
       updateRoleHint();
+      updateSubmitState();
       saveState();
     }
 
@@ -1294,12 +1333,13 @@
       document.getElementById("mode-award").classList.toggle("active", mode === "award");
       document.getElementById("mode-request").classList.toggle("active", mode === "request");
       document.getElementById("section-heading").textContent =
-        mode === "award" ? "Award Points" : "Request Points";
+        mode === "award" ? "Notice Your Partner" : "Ask for Notice";
       const btn = document.getElementById("submit-btn");
-      btn.textContent = mode === "award" ? "Award Points" : "Request Points";
+      btn.textContent = mode === "award" ? "Give Points" : "Send Request";
       btn.className = mode === "award" ? "award-btn" : "request-submit";
       document.getElementById("multiplier-row").style.display = mode === "award" ? "flex" : "none";
       updateRoleHint();
+      updateSubmitState();
     }
 
     function setMultiplier(n) {
@@ -1320,6 +1360,7 @@
     }
 
     function handleSubmit() {
+      if (!requireNamesForAction()) return;
       if (state.mode === "award") awardPoints();
       else requestPoints();
     }
@@ -1344,7 +1385,7 @@
 
       const recipient = "b";
       const nameEl = document.getElementById(`name-${recipient}`);
-      const recipientName = nameEl.value || "Partner B";
+      const recipientName = nameEl.value || "Your spouse";
       const categoryLabel = cat ? categoryLabelForKey(cat) || "Custom" : "Custom";
       const detail = custom || undefined;
       const whatNoticed = ledgerWhatLine({ category: categoryLabel, detail });
@@ -1377,7 +1418,7 @@
 
       const requester = "a";
       const nameEl = document.getElementById(`name-${requester}`);
-      const requesterName = nameEl.value || "Partner A";
+      const requesterName = nameEl.value || "You";
       const label = custom || (cat ? categoryLabelForKey(cat) || "" : "");
       const quip = requestQuips[Math.floor(Math.random() * requestQuips.length)];
 
@@ -1447,7 +1488,7 @@
 
     function showToast(points, quip, name) {
       const toast = document.getElementById("toast");
-      document.getElementById("toast-points").textContent = `+${points} to ${name}`;
+      document.getElementById("toast-points").textContent = `${name} got +${points}`;
       document.getElementById("toast-quip").textContent = quip;
       toast.classList.remove("toast-onboarding");
       toast.classList.add("show");
@@ -1474,8 +1515,8 @@
 
     function showRequestToastThenHandoff(requesterName, label) {
       const toast = document.getElementById("toast");
-      document.getElementById("toast-points").textContent = `${requesterName} is requesting credit`;
-      document.getElementById("toast-quip").textContent = `"${label}" — awaiting acknowledgment.`;
+      document.getElementById("toast-points").textContent = `${requesterName} asked for notice`;
+      document.getElementById("toast-quip").textContent = `"${label}" — send this to your partner.`;
       toast.classList.remove("toast-onboarding");
       toast.classList.add("show");
       setTimeout(() => toast.classList.remove("show"), 3500);
@@ -1483,7 +1524,7 @@
       const url = buildShareURL();
       const isMobile = /iPhone|Android/i.test(navigator.userAgent);
       if (isMobile) {
-        setTimeout(() => openMessages(`${label} 👀 ${url}`), 450);
+        setTimeout(() => openMessages(`Can you notice this one? "${label}" ${url}`), 450);
       } else {
         document.getElementById("toast-quip").textContent = url;
       }
@@ -1495,8 +1536,8 @@
       const isMobile = /iPhone|Android/i.test(navigator.userAgent);
       const notice = (whatNoticed || "").trim();
       const body = notice
-        ? `+${points} to ${recipientName} — ${notice} ${url}`
-        : `+${points} to ${recipientName} ${url}`;
+        ? `I noticed: ${notice}. ${recipientName} got +${points}. ${url}`
+        : `${recipientName} got +${points}. ${url}`;
       if (isMobile) {
         setTimeout(() => openMessages(body), 450);
       } else {
@@ -1523,7 +1564,7 @@
               <div class="pending-quip">${r.quip}</div>
             </div>
             <div class="resolve-btns">
-              <button class="resolve-btn resolve-award" onclick="resolveRequest(${r.id}, 'award')">Award it</button>
+              <button class="resolve-btn resolve-award" onclick="resolveRequest(${r.id}, 'award')">Give points</button>
               <button class="resolve-btn resolve-pass" onclick="resolveRequest(${r.id}, 'pass')">Not this one</button>
             </div>
           </div>`
@@ -1535,7 +1576,7 @@
       const list = document.getElementById("history-list");
       if (state.history.length === 0) {
         list.innerHTML =
-          '<div class="history-empty">No points awarded yet. Someone must have done something.</div>';
+          '<div class="history-empty">No notices yet. Start with one thing your partner did.</div>';
         return;
       }
       list.innerHTML = state.history
@@ -1609,8 +1650,8 @@
           document.getElementById("score-b").textContent = state.scores.b;
         }
         if (data.names) {
-          document.getElementById("name-a").value = data.names.a || "PARTNER A";
-          document.getElementById("name-b").value = data.names.b || "PARTNER B";
+          document.getElementById("name-a").value = data.names.a || "";
+          document.getElementById("name-b").value = data.names.b || "";
         }
         if (data.history) {
           state.history = data.history;
@@ -1651,6 +1692,7 @@
       const t = normNamePart(raw);
       if (!t) return true;
       if (t === "partner a" || t === "partner b") return true;
+      if (t === "you" || t === "your spouse") return true;
       return false;
     }
 
@@ -1677,7 +1719,7 @@
           isPlaceholderPartnerName(document.getElementById("name-b").value)) {
         showInfoToast(
           "One quick setup step",
-          "Open Settings (gear) and enter your name under “You,” then your spouse under “Your spouse.” That tells this phone who A and B are after every sync link.",
+          "Open Settings and enter your name plus your spouse's name before using sync links.",
           5200
         );
         return;
@@ -1685,7 +1727,7 @@
       if (packetNamesMismatchLocal(packet)) {
         showInfoToast(
           "Names didn’t line up with the link",
-          "Adjust spelling in Settings so Partner A is you on this phone and Partner B is your spouse — match what you use in texts — so scores flip the right way.",
+          "Adjust spelling in Settings so your names match what appears in texts. That keeps the scores on the right side after sync.",
           5600
         );
       }

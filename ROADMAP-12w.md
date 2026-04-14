@@ -10,6 +10,26 @@
 
 ---
 
+## Pre-beta clarity gate (before wider testers)
+
+**Intent:** No broader beta share until first-use behavior is obvious to a tired human with no coaching.
+
+**Required product changes before recruiting testers:**
+- **Forced name onboarding:** block award/request actions until both local names are set (you + spouse). This is not optional setup chrome.
+- **No visible A/B language:** keep slotting internals for sync logic, but remove A/B wording from UI copy and SMS body.
+- **Caveman copy pass:** simplify action labels and helper text to plain one-step language (e.g., "I noticed you did X", "I did X, notice me", "Give points", "Not this one").
+- **One-message vocabulary:** the same plain-language frame must appear in button labels, toasts, and precomposed SMS text.
+
+**Gate test (single exhausted parent):**
+- Give only one prompt: "Use this with your partner."
+- Observe first-use path: onboarding, award, request, and SMS handoff.
+- **Pass condition:** they do **not** ask, "Wait, what am I supposed to do?"
+- **Fail condition:** any confusion on core loop intent or next action blocks wider beta until fixed.
+
+**Status (2026-04-14):** forced names + no visible A/B language + copy/vocabulary pass are implemented in `index.html`; exhausted-parent gate test remains required before wider beta sharing.
+
+---
+
 ## Weeks 1–3 — Make it shareable (non-negotiable)
 
 | Week | Build | Ship / verify | Post / surface |
