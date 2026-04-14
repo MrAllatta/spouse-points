@@ -369,15 +369,15 @@ if ("serviceWorker" in navigator) {
 Run this gate **before** any wider beta share:
 
 - [x] **Forced names:** first-run requires both names before award/request can be submitted.
-- [ ] **Post-name micro-moment:** immediately after both names are entered, show only:
+- [x] **Post-name micro-moment:** immediately after both names are entered, show only:
   - "This isn't a real score."
   - "It's just a way to notice each other more."
   Then move straight to a tappable next action so they experience the loop right away.
 - [x] **No visible A/B copy:** UI and SMS contain no "Partner A/B" language (internal slotting remains implementation detail only).
 - [x] **Caveman copy sweep:** action labels and helper text are plain enough for low-energy use.
 - [x] **Vocabulary consistency:** same conceptual phrasing across buttons, toasts, ledger labels, and SMS drafts.
-- [ ] **No lecture copy:** onboarding text stays to the two-line micro-moment only; no philosophy paragraph or manifesto framing.
-- [ ] **Request/award visibility fix:** after sending a request, an award must not appear on the request sender's UI preemptively. Award confirmation should appear only on the receiver's UI first, then on the sender only after the receiver awards and the return sync link is applied.
+- [x] **No lecture copy:** onboarding text stays to the two-line micro-moment only; no philosophy paragraph or manifesto framing.
+- [x] **Request/award visibility fix:** after sending a request, an award must not appear on the request sender's UI preemptively. Award confirmation should appear only on the receiver's UI first, then on the sender only after the receiver awards and the return sync link is applied.
 - [x] **Desktop handoff strategy:** detect non-mobile and switch from `sms:` auto-open to copy-first UX:
   - no auto-open Messages on desktop
   - show: "Copy this and send it to [Name]"
@@ -439,6 +439,77 @@ If any box fails, treat it as a blocker and fix copy/flow before expanding the t
   - Measure time-to-send and ask 2 prompts after each mode: "Did this feel fair?" and "Did this feel slower?"
 - **Pass criteria for beta-on toggle:** median send time does not materially regress and subjective fairness improves.
 - **Fallback:** keep toggle shipped but default off (or remove from beta build) if fairness gain is weak or send friction increases.
+
+### Execution checklist (run log template)
+
+Use this as the pre-beta evidence log. Fill date/owner/device details as you execute.
+
+**Run metadata**
+- [ ] Date: __________
+- [ ] Owner: __________
+- [ ] Sender device/OS: __________
+- [ ] Receiver device/OS: __________
+- [ ] Build/commit tested: __________
+
+**Blocker A (P0) — burst-send sync-order validation**
+- [ ] A1 run completed (3 awards burst; receiver opens latest link only)
+- [ ] A1 result recorded (PASS/FAIL): __________
+- [ ] A1 evidence attached (sender + receiver screenshots, decoded latest packet `scores/pending/ts`)
+- [ ] A2 run completed (2 awards, then 1 request; receiver opens latest link only)
+- [ ] A2 result recorded (PASS/FAIL): __________
+- [ ] A2 evidence attached (sender + receiver screenshots, decoded latest packet `scores/pending/ts`)
+- [ ] A3 run completed (request, then award, then request; receiver opens latest link only)
+- [ ] A3 result recorded (PASS/FAIL): __________
+- [ ] A3 evidence attached (sender + receiver screenshots, decoded latest packet `scores/pending/ts`)
+- [ ] A4 run completed (open links out of order: latest first, then older)
+- [ ] A4 result recorded (PASS/FAIL): __________
+- [ ] A4 evidence attached (state comparison before/after older link opens)
+- [ ] Combined verdict: newest-link-wins confirmed across A1–A4
+- [ ] If any FAIL: beta freeze invoked + stale-packet guard (`ts`) ticket created
+- [ ] After fix (if needed): A1–A4 rerun completed and passed
+
+**Blocker B — multi-select awards prototype evaluation**
+- [ ] Settings toggle implemented: "Enable multi-select awards (beta)" (default OFF)
+- [ ] Single-select baseline run completed (5 sends)
+- [ ] Baseline median send time captured: __________
+- [ ] Multi-select trial run completed (5 sends)
+- [ ] Multi-select median send time captured: __________
+- [ ] Fairness prompt captured after baseline: "Did this feel fair?" -> __________
+- [ ] Fairness prompt captured after multi-select: "Did this feel fair?" -> __________
+- [ ] Speed prompt captured after baseline: "Did this feel slower?" -> __________
+- [ ] Speed prompt captured after multi-select: "Did this feel slower?" -> __________
+- [ ] Ledger/SMS readability spot-check passed for grouped awards
+- [ ] Decision recorded: `beta_default=on` / `beta_default=off` / `defer`
+- [ ] Rationale captured (1-2 sentences): __________
+
+**Pre-beta go/no-go**
+- [ ] A1–A4 all PASS (or PASS after documented fix/rerun)
+- [ ] Multi-select decision documented with evidence
+- [ ] Regression checklist in this doc re-run after any sync/order fix
+- [ ] Final decision: `GO wider beta` / `NO-GO`
+
+### Decode packet quickly (helper)
+
+Use this during A1–A4 evidence capture to verify link payloads in seconds.
+
+1) Copy the full sync URL from Messages.
+2) In browser console, run:
+
+```js
+const hash = new URL("PASTE_FULL_URL_HERE").hash;
+const encoded = hash.startsWith("#state=") ? hash.slice(7) : "";
+const packet = JSON.parse(atob(encoded));
+console.log({
+  v: packet.v,
+  scores: packet.scores,
+  pendingCount: Array.isArray(packet.pending) ? packet.pending.length : 0,
+  ts: packet.ts,
+  tsISO: packet.ts ? new Date(packet.ts).toISOString() : null,
+});
+```
+
+3) Capture screenshot of console output and store with test evidence.
+4) For out-of-order tests, compare `ts` values directly: newer packet should have larger `ts`.
 
 ### Beta tester interview questions (required)
 

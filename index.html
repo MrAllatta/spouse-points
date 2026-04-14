@@ -311,6 +311,47 @@
 
     .desktop-handoff-copy:hover { background: #2d2f4a; }
 
+    .micro-moment {
+      display: none;
+      max-width: 600px;
+      width: calc(100% - 2rem);
+      margin: 0.25rem 1rem 1rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 12px;
+      padding: 0.95rem 1rem 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .micro-moment.show { display: block; }
+
+    .micro-moment-line {
+      font-size: 0.95rem;
+      line-height: 1.35;
+      color: var(--text);
+    }
+
+    .micro-moment-line + .micro-moment-line {
+      margin-top: 0.25rem;
+    }
+
+    .micro-moment-cta {
+      margin-top: 0.65rem;
+      width: 100%;
+      padding: 0.7rem 0.75rem;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: white;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .micro-moment-cta:hover { background: var(--accent-hover); }
+
     .history {
       max-width: 600px;
       width: calc(100% - 2rem);
@@ -953,6 +994,12 @@
     <button type="button" class="desktop-handoff-copy" id="desktop-handoff-copy">Copy Message</button>
   </div>
 
+  <div class="micro-moment" id="micro-moment" aria-live="polite">
+    <div class="micro-moment-line">This isn't a real score.</div>
+    <div class="micro-moment-line">It's just a way to notice each other more.</div>
+    <button type="button" class="micro-moment-cta" onclick="dismissMicroMoment()">Notice one thing</button>
+  </div>
+
   <script>
     // Editorial source of truth for quips: quips.yaml (sync before deploy).
     const DEFAULT_CATEGORIES = [
@@ -1092,7 +1139,9 @@
       customPoints: {},
       categories: [],
       microMomentShown: null,
+      microMomentPending: false,
       nameSetupHintShown: false,
+      lastAppliedPacketTs: 0,
     };
     let infoToastTimer = null;
 
@@ -1288,7 +1337,13 @@
 
       if (state.microMomentShown === null) {
         state.microMomentShown = namesAreReady();
+        state.microMomentPending = false;
         saveState();
+      }
+      if (state.microMomentPending && namesAreReady()) {
+        showMicroMoment();
+      } else {
+        hideMicroMoment();
       }
 
       document.addEventListener("keydown", (e) => {
@@ -1418,14 +1473,30 @@
       if (state.microMomentShown) return;
       if (!namesAreReady()) return;
       state.microMomentShown = true;
+      state.microMomentPending = true;
       setMode("award");
-      showInfoToast(
-        "This isn't a real score.",
-        "It's just a way to notice each other more.",
-        5600
-      );
+      showMicroMoment();
+      saveState();
+    }
+
+    function showMicroMoment() {
+      const box = document.getElementById("micro-moment");
+      if (!box) return;
+      box.classList.add("show");
+    }
+
+    function hideMicroMoment() {
+      const box = document.getElementById("micro-moment");
+      if (!box) return;
+      box.classList.remove("show");
+    }
+
+    function dismissMicroMoment() {
+      state.microMomentPending = false;
+      hideMicroMoment();
       const firstCategory = document.querySelector("#categories .category-btn");
       if (firstCategory && typeof firstCategory.focus === "function") firstCategory.focus();
+      saveState();
     }
 
     function setMode(mode) {
@@ -1777,7 +1848,9 @@
         customPoints: state.customPoints,
         categories: state.categories,
         microMomentShown: state.microMomentShown,
+        microMomentPending: state.microMomentPending,
         nameSetupHintShown: state.nameSetupHintShown,
+        lastAppliedPacketTs: state.lastAppliedPacketTs,
         names: {
           a: document.getElementById("name-a").value,
           b: document.getElementById("name-b").value,
@@ -1833,10 +1906,20 @@
         } else {
           state.microMomentShown = null;
         }
+        if (typeof data.microMomentPending === "boolean") {
+          state.microMomentPending = data.microMomentPending;
+        } else {
+          state.microMomentPending = false;
+        }
         if (typeof data.nameSetupHintShown === "boolean") {
           state.nameSetupHintShown = data.nameSetupHintShown;
         } else {
           state.nameSetupHintShown = false;
+        }
+        if (typeof data.lastAppliedPacketTs === "number" && Number.isFinite(data.lastAppliedPacketTs)) {
+          state.lastAppliedPacketTs = data.lastAppliedPacketTs;
+        } else {
+          state.lastAppliedPacketTs = 0;
         }
       } catch (e) {
         if (!state.categories || !state.categories.length) state.categories = cloneDefaultCategories();
@@ -1940,8 +2023,13 @@
 
     function applyPacket(packet) {
       if (!packet || packet.v !== 1) return false;
+      const packetTs = typeof packet.ts === "number" && Number.isFinite(packet.ts) ? packet.ts : 0;
+      if (packetTs && state.lastAppliedPacketTs && packetTs < state.lastAppliedPacketTs) return false;
       let scores = packet.scores;
       let pending = packet.pending || [];
+      if (!scores || typeof scores !== "object") return false;
+      if (!Number.isFinite(scores.a) || !Number.isFinite(scores.b)) return false;
+      if (!Array.isArray(pending)) pending = [];
       const swap = incomingRolesAreOppositeLocal(packet);
       if (swap) {
         scores = flipScoreSides(scores);
@@ -1953,6 +2041,7 @@
       document.getElementById("score-b").textContent = state.scores.b;
       syncNames();
       renderPending();
+      if (packetTs > state.lastAppliedPacketTs) state.lastAppliedPacketTs = packetTs;
       saveState();
       return true;
     }
