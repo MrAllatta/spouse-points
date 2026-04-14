@@ -402,6 +402,20 @@ And the big one:
 
 If the answer trends toward "just the app more," quietly panic and adjust before widening usage. Treat that as a north-star signal, not a minor preference.
 
+### Regression checklist (request/award sync integrity)
+
+Run after any change to request, award, `#state=` sync, or pending resolution:
+
+- [ ] **Request send creates pending only:** sender sends request; sender UI shows request sent state but **not** awarded state.
+- [ ] **Receiver sees pending request:** receiver opens incoming link and sees pending request ready for Award/Pass.
+- [ ] **No premature award on sender:** before receiver acts, sender does not show awarded entry, awarded toast, or score increase for that request.
+- [ ] **Award appears on receiver first:** receiver taps Award; receiver score/ledger updates immediately on receiver UI.
+- [ ] **Sender updates only via return sync:** sender applies return link from receiver award; only then sender UI shows awarded state/score change.
+- [ ] **Pass remains silent:** receiver taps Pass; sender gets no award confirmation, no score change, and no false ledger row.
+- [ ] **Direct award flow still works:** non-request award still sends/loads correctly and does not regress from this fix.
+
+Any failure is a release blocker for pre-beta expansion.
+
 ---
 
 ## Out of Scope for V2

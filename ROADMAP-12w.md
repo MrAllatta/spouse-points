@@ -42,6 +42,8 @@
 
 **Interpretation rule:** if answers lean toward "I noticed the app more," quietly panic and adjust. That means we are drifting from mirror-to-relationship toward app-as-center.
 
+**Regression checklist requirement:** before wider beta sharing, run the request/award sync integrity checklist in `BUILD-v2.md` after any sync-flow changes. Treat failures as blockers, not polish.
+
 **Status (2026-04-14):** forced names + no visible A/B language + copy/vocabulary pass + desktop copy-first handoff are implemented in `index.html`; exhausted-parent gate test remains required before wider beta sharing.
 
 ---
