@@ -866,26 +866,42 @@
       flex-shrink: 0;
     }
 
-    .settings-done {
-      width: 100%;
-      margin-top: 1.35rem;
-      padding: 0.85rem;
+    .settings-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 1rem;
+    }
+
+    .settings-actions-top {
+      position: sticky;
+      top: -1.35rem;
+      z-index: 2;
+      background: var(--card);
+      padding: 0.5rem 0 0.65rem;
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 1px 0 rgba(61, 64, 91, 0.08), 0 6px 12px -12px rgba(61, 64, 91, 0.35);
+    }
+
+    .settings-save {
+      min-width: 5.5rem;
+      padding: 0.65rem 1rem;
       background: var(--accent);
       color: white;
       border: none;
       border-radius: 12px;
       font-family: inherit;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
       transition: background 0.2s, transform 0.1s;
     }
 
-    .settings-done:hover {
+    .settings-save:hover {
       background: var(--accent-hover);
     }
 
-    .settings-done:active {
+    .settings-save:active {
       transform: scale(0.98);
     }
 
@@ -978,6 +994,9 @@
   <div class="settings-panel" id="settings-panel" onclick="event.stopPropagation()">
     <h2>Settings</h2>
     <p class="settings-hint">This phone is you. The other score is your spouse. Set names once, then use the buttons.</p>
+    <div class="settings-actions settings-actions-top">
+      <button type="button" class="settings-save" onclick="closeSettings()">Save</button>
+    </div>
 
     <div class="settings-names">
       <div>
@@ -1013,7 +1032,6 @@
       />
     </div>
 
-    <button type="button" class="settings-done" onclick="closeSettings()">Done</button>
   </div>
 
   <div class="result-toast" id="toast">
