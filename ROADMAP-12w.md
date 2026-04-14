@@ -50,6 +50,15 @@
 
 **Latest planning question (2026-04-14):** validate burst-send sync semantics: if multiple awards and then a request are sent before partner opens any message, the newest link should include sender-current state so receiver can open only the latest message and still land fully up to date.
 
+### Immediate pre-beta blocker plan (must complete before wider tester pool)
+
+- **Blocker 1 (P0 sync integrity):** run a burst-send matrix on real phones and prove newest-link-wins behavior for award-only and mixed award+request bursts.
+- **Required scenarios:** 3 awards burst, awards-then-request burst, mixed request/award burst, and out-of-order link opens.
+- **Release rule:** any stale-state or ordering mismatch is a hard stop; fix apply ordering (stale packet guard via `ts`) and rerun matrix + regression checklist before continuing.
+- **Blocker 2 (multi-select expectation):** prototype optional multi-select awards behind a Settings toggle that defaults off.
+- **Evaluation rule:** compare single-select vs multi-select for send speed and felt fairness in the same week; keep off by default unless fairness signal is clearly better without meaningful speed loss.
+- **Documentation rule:** record outcomes in `BUILD-v2.md` pre-beta section so beta go/no-go is evidence-backed, not memory-backed.
+
 ---
 
 ## Weeks 1–3 — Make it shareable (non-negotiable)

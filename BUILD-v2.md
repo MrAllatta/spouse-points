@@ -409,6 +409,37 @@ If any box fails, treat it as a blocker and fix copy/flow before expanding the t
 - **Verification target:** Confirm request creation after one or more unsynced awards still serializes current sender state into `#state=`; receiver applying only the latest link lands on the same state as replaying all prior links.
 - **If mismatch appears:** Treat as release-blocking sync integrity bug and fix packet generation/apply ordering before wider beta.
 
+### Pre-beta blocker execution plan (2026-04-14)
+
+#### Blocker A (P0): burst-send sync-order semantics
+
+- **Owner outcome:** Prove or disprove **newest-link-wins** under burst sends before wider beta.
+- **Validation matrix (must run on real phones):**
+  - A1: send 3 spontaneous awards in a row, open only the last link on receiver.
+  - A2: send 2 awards, then 1 request, open only the last link on receiver.
+  - A3: send request, then award, then request, open only the last link on receiver.
+  - A4: open links out of order (latest first, then older) and confirm final state remains correct.
+- **Evidence required:** capture sender/receiver screenshots for each step plus decoded packet checks (`scores`, `pending`, `ts`) from each generated link.
+- **Pass criteria:** latest link alone reproduces sender-current state for scores + pending in A1–A3; A4 never regresses final state after newer state already applied.
+- **Fail handling (release-blocking):**
+  - Freeze wider beta recruiting.
+  - Implement deterministic apply guard (ignore stale packet by `ts` once a newer packet has been applied on that device).
+  - Re-run full matrix + existing regression checklist before reopening beta.
+
+#### Blocker B: multi-select awards expectation
+
+- **Owner outcome:** test whether grouped recognition improves fairness without hurting speed.
+- **Implementation shape (prototype behind toggle):**
+  - Add Settings toggle: **"Enable multi-select awards (beta)"** default **off**.
+  - In award mode only, toggle category chips to selected/unselected state; request flow stays single-select.
+  - Submit one grouped award: sum selected category points (then multiplier), write one ledger row, compose one SMS line with selected labels + total.
+  - Keep one-tap single-select unchanged when toggle is off.
+- **Evaluation plan (same couple, same week):**
+  - Run 5 sends in single-select mode, then 5 sends in multi-select mode.
+  - Measure time-to-send and ask 2 prompts after each mode: "Did this feel fair?" and "Did this feel slower?"
+- **Pass criteria for beta-on toggle:** median send time does not materially regress and subjective fairness improves.
+- **Fallback:** keep toggle shipped but default off (or remove from beta build) if fairness gain is weak or send friction increases.
+
 ### Beta tester interview questions (required)
 
 Ask questions that hurt slightly:

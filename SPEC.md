@@ -230,6 +230,8 @@ History stays on-device and is never transmitted. It's a private local archive.
 
 **The text thread is the commit log.** Each link encodes the state at that moment. Scroll back through the thread and you can see the ledger's history. This is a little beautiful and also ridiculous, which is right.
 
+**Burst-send ordering policy (pre-beta blocker):** in real usage, partners will send multiple messages before the other person opens any link. Product expectation is **newest-link-wins**: opening only the most recent link should land the receiver on sender-current `scores` + `pending` without requiring replay of older links. Pre-beta must validate this on-device for award-only bursts and mixed award/request bursts. If out-of-order opens can regress state, the client should treat packet `ts` as a stale-guard and ignore older packets after a newer one has been applied.
+
 **URL length:** ~600 characters with a typical pending queue. iMessage renders it as a preview card, not a wall of text.
 
 **V2.5: PWA (installed software)**
