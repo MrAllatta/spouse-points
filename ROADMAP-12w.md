@@ -27,7 +27,7 @@
 - **Pass condition:** they do **not** ask, "Wait, what am I supposed to do?"
 - **Fail condition:** any confusion on core loop intent or next action blocks wider beta until fixed.
 
-**Status (2026-04-14):** forced names + no visible A/B language + copy/vocabulary pass are implemented in `index.html`; exhausted-parent gate test remains required before wider beta sharing.
+**Status (2026-04-14):** forced names + no visible A/B language + copy/vocabulary pass + desktop copy-first handoff are implemented in `index.html`; exhausted-parent gate test remains required before wider beta sharing.
 
 ---
 

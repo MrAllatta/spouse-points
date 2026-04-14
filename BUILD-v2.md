@@ -372,14 +372,14 @@ Run this gate **before** any wider beta share:
 - [x] **No visible A/B copy:** UI and SMS contain no "Partner A/B" language (internal slotting remains implementation detail only).
 - [x] **Caveman copy sweep:** action labels and helper text are plain enough for low-energy use.
 - [x] **Vocabulary consistency:** same conceptual phrasing across buttons, toasts, ledger labels, and SMS drafts.
-- [ ] **Desktop handoff strategy:** detect non-mobile and switch from `sms:` auto-open to copy-first UX:
+- [x] **Desktop handoff strategy:** detect non-mobile and switch from `sms:` auto-open to copy-first UX:
   - no auto-open Messages on desktop
   - show: "Copy this and send it to [Name]"
   - provide a large, obvious **Copy Message** button
 - [ ] **Exhausted-parent test:** one tired parent gets one prompt ("Use this with your partner"), then completes onboarding + award + request without coaching.
 - [ ] **Pass line:** tester never asks "Wait, what am I supposed to do?"
 
-Status (2026-04-14): Product-side clarity fixes landed in `index.html`; human exhausted-parent test is still required before wider beta share.
+Status (2026-04-14): Product-side clarity fixes (including desktop copy-first handoff) landed in `index.html`; human exhausted-parent test is still required before wider beta share.
 
 If any box fails, treat it as a blocker and fix copy/flow before expanding the tester pool.
 

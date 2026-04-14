@@ -217,6 +217,12 @@
 
     .award-btn:hover { background: var(--accent-hover); }
     .award-btn:active { transform: scale(0.98); }
+    .award-btn:disabled,
+    .request-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
 
     .result-toast {
       position: fixed;
@@ -254,6 +260,56 @@
       font-size: 1rem;
       line-height: 1.5;
     }
+
+    .desktop-handoff {
+      display: none;
+      max-width: 600px;
+      width: calc(100% - 2rem);
+      margin: 0.5rem 1rem 1rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .desktop-handoff.show { display: block; }
+
+    .desktop-handoff-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.45rem;
+      color: var(--text);
+    }
+
+    .desktop-handoff-body {
+      width: 100%;
+      min-height: 80px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem;
+      resize: vertical;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .desktop-handoff-copy {
+      margin-top: 0.6rem;
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 10px;
+      background: var(--text);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .desktop-handoff-copy:hover { background: #2d2f4a; }
 
     .history {
       max-width: 600px;
@@ -891,6 +947,12 @@
     <div class="quip" id="toast-quip"></div>
   </div>
 
+  <div class="desktop-handoff" id="desktop-handoff">
+    <div class="desktop-handoff-title" id="desktop-handoff-title">Copy this and send it to your partner</div>
+    <textarea class="desktop-handoff-body" id="desktop-handoff-body" readonly></textarea>
+    <button type="button" class="desktop-handoff-copy" id="desktop-handoff-copy">Copy Message</button>
+  </div>
+
   <script>
     // Editorial source of truth for quips: quips.yaml (sync before deploy).
     const DEFAULT_CATEGORIES = [
@@ -1207,6 +1269,8 @@
       renderSettingsCategoryEditor();
       syncCustomPointsInputFromState();
       syncNames();
+      const copyBtn = document.getElementById("desktop-handoff-copy");
+      if (copyBtn) copyBtn.addEventListener("click", copyDesktopHandoffMessage);
 
       document.getElementById("name-a").addEventListener("input", syncNames);
       document.getElementById("name-b").addEventListener("input", syncNames);
@@ -1508,6 +1572,46 @@
       }, dur);
     }
 
+    function isMobileDevice() {
+      return /iPhone|Android/i.test(navigator.userAgent);
+    }
+
+    function hideDesktopHandoff() {
+      const box = document.getElementById("desktop-handoff");
+      if (box) box.classList.remove("show");
+    }
+
+    function showDesktopHandoff(message, partnerName) {
+      const box = document.getElementById("desktop-handoff");
+      const title = document.getElementById("desktop-handoff-title");
+      const body = document.getElementById("desktop-handoff-body");
+      if (!box || !title || !body) return;
+      title.textContent = `Copy this and send it to ${partnerName || "your partner"}`;
+      body.value = message;
+      box.classList.add("show");
+      body.focus();
+      body.select();
+    }
+
+    async function copyDesktopHandoffMessage() {
+      const body = document.getElementById("desktop-handoff-body");
+      if (!body) return;
+      const text = body.value || "";
+      if (!text) return;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          body.focus();
+          body.select();
+          document.execCommand("copy");
+        }
+        showInfoToast("Copied", "Message copied. Paste it into your text thread.", 2600);
+      } catch (e) {
+        showInfoToast("Copy failed", "Select the text and copy it manually.", 3200);
+      }
+    }
+
     function openMessages(precomposedText) {
       const encoded = encodeURIComponent(precomposedText);
       window.location.href = `sms:?body=${encoded}`;
@@ -1522,26 +1626,29 @@
       setTimeout(() => toast.classList.remove("show"), 3500);
 
       const url = buildShareURL();
-      const isMobile = /iPhone|Android/i.test(navigator.userAgent);
+      const isMobile = isMobileDevice();
+      const body = `Can you notice this one? "${label}" ${url}`;
       if (isMobile) {
-        setTimeout(() => openMessages(`Can you notice this one? "${label}" ${url}`), 450);
+        hideDesktopHandoff();
+        setTimeout(() => openMessages(body), 450);
       } else {
-        document.getElementById("toast-quip").textContent = url;
+        showDesktopHandoff(body, "your partner");
       }
     }
 
     function showToastThenSyncMessages(points, quip, recipientName, whatNoticed) {
       const url = buildShareURL();
       showToast(points, quip, recipientName);
-      const isMobile = /iPhone|Android/i.test(navigator.userAgent);
+      const isMobile = isMobileDevice();
       const notice = (whatNoticed || "").trim();
       const body = notice
         ? `I noticed: ${notice}. ${recipientName} got +${points}. ${url}`
         : `${recipientName} got +${points}. ${url}`;
       if (isMobile) {
+        hideDesktopHandoff();
         setTimeout(() => openMessages(body), 450);
       } else {
-        document.getElementById("toast-quip").textContent = url;
+        showDesktopHandoff(body, recipientName);
       }
     }
 
