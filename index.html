@@ -1196,8 +1196,11 @@
       nameSetupHintShown: false,
       messageAppOnboardingShown: false,
       lastAppliedPacketTs: 0,
+      iosAddToHomeHintShown: false,
     };
     let infoToastTimer = null;
+    let iosAddToHomeHandoffHooked = false;
+    let iosAddToHomeFallbackTimer = null;
 
     function cloneDefaultCategories() {
       return DEFAULT_CATEGORIES.map((c) => ({ ...c }));
@@ -1405,6 +1408,8 @@
         hideMicroMoment();
       }
 
+      maybeScheduleIosAddToHomeHintFallback();
+
       document.addEventListener("keydown", (e) => {
         if (e.key !== "Escape") return;
         const panel = document.getElementById("settings-panel");
@@ -1546,6 +1551,7 @@
       updateRoleHint();
       updateSubmitState();
       saveState();
+      maybeScheduleIosAddToHomeHintFallback();
     }
 
     function maybeShowPostNameMicroMoment() {
@@ -1820,6 +1826,83 @@
       return /iPhone|Android/i.test(navigator.userAgent);
     }
 
+    function isIosTouchDevice() {
+      const ua = navigator.userAgent || "";
+      if (/iPad|iPhone|iPod/i.test(ua)) return true;
+      if (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) return true;
+      return false;
+    }
+
+    function isStandaloneDisplay() {
+      try {
+        if (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) return true;
+        if (window.matchMedia && window.matchMedia("(display-mode: minimal-ui)").matches) return true;
+      } catch (e) {}
+      return navigator.standalone === true;
+    }
+
+    function shouldOfferIosAddToHomeHint() {
+      return isIosTouchDevice() && !isStandaloneDisplay();
+    }
+
+    function iosAddToHomeHintSafeToShow() {
+      return namesAreReady() || state.nameSetupHintShown;
+    }
+
+    function tryShowIosAddToHomeHintIfEligible() {
+      if (state.iosAddToHomeHintShown) return false;
+      if (!shouldOfferIosAddToHomeHint()) return false;
+      if (!iosAddToHomeHintSafeToShow()) return false;
+      state.iosAddToHomeHintShown = true;
+      saveState();
+      showInfoToast(
+        "Add to Home Screen",
+        "In Safari, tap Share, scroll the actions if Add to Home Screen is off-screen, then tap Add to Home Screen so this opens full screen next time.",
+        11000
+      );
+      return true;
+    }
+
+    function scheduleIosAddToHomeHintFromHandoff() {
+      if (state.iosAddToHomeHintShown) return;
+      if (!shouldOfferIosAddToHomeHint()) return;
+      if (iosAddToHomeHandoffHooked) return;
+      iosAddToHomeHandoffHooked = true;
+      const delayMs = 2000;
+      setTimeout(() => {
+        if (state.iosAddToHomeHintShown) return;
+        if (!shouldOfferIosAddToHomeHint()) return;
+        const fire = () => {
+          tryShowIosAddToHomeHintIfEligible();
+        };
+        if (document.visibilityState === "hidden") {
+          const onVis = () => {
+            if (document.visibilityState !== "visible") return;
+            document.removeEventListener("visibilitychange", onVis);
+            setTimeout(fire, 500);
+          };
+          document.addEventListener("visibilitychange", onVis);
+        } else {
+          fire();
+        }
+      }, delayMs);
+    }
+
+    function maybeScheduleIosAddToHomeHintFallback() {
+      if (!iosAddToHomeHintSafeToShow()) return;
+      scheduleIosAddToHomeHintFallback();
+    }
+
+    function scheduleIosAddToHomeHintFallback() {
+      if (state.iosAddToHomeHintShown) return;
+      if (!shouldOfferIosAddToHomeHint()) return;
+      if (iosAddToHomeFallbackTimer) return;
+      iosAddToHomeFallbackTimer = setTimeout(() => {
+        iosAddToHomeFallbackTimer = null;
+        tryShowIosAddToHomeHintIfEligible();
+      }, 14000);
+    }
+
     function hideDesktopHandoff() {
       const box = document.getElementById("desktop-handoff");
       if (box) box.classList.remove("show");
@@ -1874,6 +1957,7 @@
       const body = `Can you notice this one? "${label}" ${url}`;
       const spouseName = document.getElementById("name-b").value || "your spouse";
       if (isMobile) {
+        scheduleIosAddToHomeHintFromHandoff();
         hideDesktopHandoff();
         setTimeout(() => openMessages(body), 450);
       } else {
@@ -1890,6 +1974,7 @@
         ? `I noticed: ${notice}. ${recipientName} got +${points}. ${url}`
         : `${recipientName} got +${points}. ${url}`;
       if (isMobile) {
+        scheduleIosAddToHomeHintFromHandoff();
         hideDesktopHandoff();
         setTimeout(() => openMessages(body), 450);
       } else {
@@ -1973,6 +2058,7 @@
         nameSetupHintShown: state.nameSetupHintShown,
         messageAppOnboardingShown: state.messageAppOnboardingShown,
         lastAppliedPacketTs: state.lastAppliedPacketTs,
+        iosAddToHomeHintShown: state.iosAddToHomeHintShown,
         names: {
           a: document.getElementById("name-a").value,
           b: document.getElementById("name-b").value,
@@ -2047,6 +2133,11 @@
           state.messageAppOnboardingShown = data.messageAppOnboardingShown;
         } else {
           state.messageAppOnboardingShown = false;
+        }
+        if (typeof data.iosAddToHomeHintShown === "boolean") {
+          state.iosAddToHomeHintShown = data.iosAddToHomeHintShown;
+        } else {
+          state.iosAddToHomeHintShown = false;
         }
         if (typeof data.lastAppliedPacketTs === "number" && Number.isFinite(data.lastAppliedPacketTs)) {
           state.lastAppliedPacketTs = data.lastAppliedPacketTs;

@@ -357,6 +357,7 @@ The `index.html` prototype is a functional proof of concept for:
 - **Multi-select awards toggle (beta):** optional Settings switch for selecting multiple categories in one award action; grouped awards sum selected category points, then apply multiplier, and send one ledger/SMS line
 - URL-as-state sync packet (`#state=` hash, base64 JSON) with load-time apply, **A/B swap when the sender’s “who is A” differs from this phone**, **onboarding toast** after link open when names are still placeholders or don’t match the packet, and hash strip
 - Messages (`sms:`) handoff after spontaneous award, after request, and after awarding a pending request (with desktop URL-in-toast fallback); pre-filled SMS follows *Core Mechanics* (points, recipient, what was noticed, link — quip stays in-app)
+- **iOS Safari (in-browser):** one-time toast after a mobile Messages handoff (and a delayed fallback) nudging **Share → scroll if Add to Home Screen is off-screen → Add to Home Screen**; dismissal stored in the same localStorage blob as other client flags
 - Pass dismiss with **no** ledger row (**“Not this one”**), matching the URL model
 - The emotional tone of the quip writing
 
@@ -365,6 +366,19 @@ What it does not yet capture:
 - Broader **device QA** (more phones, offline edge cases, bad `#state=` payloads — see `ROADMAP-12w.md` week 12 / `BUILD-v2.md` testing checklist)
 
 The mock is the right fidelity for now. It's enough to show someone and have a real conversation about whether it works.
+
+---
+
+## Beta feedback log
+
+Entries are **internal QA notes** (relationship disclosed where it affects tone). Back up claims with **screenshots** in your own archive; this file only summarizes.
+
+### 2026-04 — first beta session (sister)
+
+- **Overall:** Excited; relationship made the session warmer than a cold stranger test.
+- **First open / onboarding:** Initial UI worked; names in Settings worked; choosing an award and sending via Messages worked.
+- **Sync loop:** No structured feedback yet on the full send / receive / request cycle (follow up after partner exercises links and pending).
+- **iOS — Add to Home Screen:** Worked when guided live, but **Share → Add to Home Screen** often sits **below the fold** in the share sheet; the app did not surface that, so the tester had to be talked through scrolling. **Mitigation shipped:** one-time in-app toast on iPhone Safari (after a mobile Messages handoff, plus a delayed fallback) describing **Share → scroll if needed → Add to Home Screen**, without adding a separate explainer page.
 
 ---
 
