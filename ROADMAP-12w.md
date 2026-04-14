@@ -21,7 +21,7 @@
   - "It's just a way to notice each other more."
   Then immediately route to a clear tappable action so they *do*, not read.
 - **No visible A/B language:** keep slotting internals for sync logic, but remove A/B wording from UI copy and SMS body.
-- **Caveman copy pass:** simplify action labels and helper text to plain one-step language (e.g., "I noticed you did X", "I did X, notice me", "Give points", "Not this one").
+- **Caveman copy pass:** simplify action labels and helper text to plain one-step language (e.g., "I noticed you did X", "I did X, notice me", "Give Points", "Not this one").
 - **One-message vocabulary:** the same plain-language frame must appear in button labels, toasts, and precomposed SMS text.
 - **No lecture copy:** avoid onboarding philosophy blocks or manifesto-style explanation; first-use should stay short and action-first.
 - **Request/award visibility integrity:** after request send, do not show awarded state on the request sender's UI. Awarded state must appear on the receiver first and only propagate back when the receiver completes award + return sync.

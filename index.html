@@ -981,7 +981,7 @@
   <div class="history">
     <h3>The Ledger</h3>
     <div id="history-list">
-      <div class="history-empty">No notices yet. Start with one thing your partner did.</div>
+      <div class="history-empty">No notices yet. Start with one thing your spouse did.</div>
     </div>
   </div>
 
@@ -1040,7 +1040,7 @@
   </div>
 
   <div class="desktop-handoff" id="desktop-handoff">
-    <div class="desktop-handoff-title" id="desktop-handoff-title">Copy this and send it to your partner</div>
+    <div class="desktop-handoff-title" id="desktop-handoff-title">Copy this and send it to your spouse</div>
     <textarea class="desktop-handoff-body" id="desktop-handoff-body" readonly></textarea>
     <button type="button" class="desktop-handoff-copy" id="desktop-handoff-copy">Copy Message</button>
   </div>
@@ -1821,7 +1821,7 @@
       const title = document.getElementById("desktop-handoff-title");
       const body = document.getElementById("desktop-handoff-body");
       if (!box || !title || !body) return;
-      title.textContent = `Copy this and send it to ${partnerName || "your partner"}`;
+      title.textContent = `Copy this and send it to ${partnerName || "your spouse"}`;
       body.value = message;
       box.classList.add("show");
       body.focus();
@@ -1855,7 +1855,7 @@
     function showRequestToastThenHandoff(requesterName, label) {
       const toast = document.getElementById("toast");
       document.getElementById("toast-points").textContent = `${requesterName} asked for notice`;
-      document.getElementById("toast-quip").textContent = `"${label}" — send this to your partner.`;
+      document.getElementById("toast-quip").textContent = `"${label}" — send this to your spouse.`;
       toast.classList.remove("toast-onboarding");
       toast.classList.add("show");
       setTimeout(() => toast.classList.remove("show"), 3500);
@@ -1863,7 +1863,7 @@
       const url = buildShareURL();
       const isMobile = isMobileDevice();
       const body = `Can you notice this one? "${label}" ${url}`;
-      const spouseName = document.getElementById("name-b").value || "your partner";
+      const spouseName = document.getElementById("name-b").value || "your spouse";
       if (isMobile) {
         hideDesktopHandoff();
         setTimeout(() => openMessages(body), 450);
@@ -1909,10 +1909,10 @@
             ${
               r.requester === "b"
                 ? `<div class="resolve-btns">
-                    <button class="resolve-btn resolve-award" onclick="resolveRequest(${r.id}, 'award')">Give points</button>
+                    <button class="resolve-btn resolve-award" onclick="resolveRequest(${r.id}, 'award')">Give Points</button>
                     <button class="resolve-btn resolve-pass" onclick="resolveRequest(${r.id}, 'pass')">Not this one</button>
                   </div>`
-                : `<div class="pending-quip">Sent. Waiting for your partner to respond.</div>`
+                : `<div class="pending-quip">Sent. Waiting for your spouse to respond.</div>`
             }
           </div>`
         )
@@ -1923,7 +1923,7 @@
       const list = document.getElementById("history-list");
       if (state.history.length === 0) {
         list.innerHTML =
-          '<div class="history-empty">No notices yet. Start with one thing your partner did.</div>';
+          '<div class="history-empty">No notices yet. Start with one thing your spouse did.</div>';
         return;
       }
       list.innerHTML = state.history

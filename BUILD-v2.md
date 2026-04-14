@@ -6,7 +6,7 @@
 
 **Product stance (do not skip when implementing):** Numeric scores and `pointValues` exist for **sync and clarity**, not to crown a winner. Prefer **ledger + message body** as the emotional surface; avoid adding extra number chrome without cause. **Absurd or non-comparable values** (e.g. birth) are intentional — they break fungible “we’re seriously counting” energy. Full debate and open questions: `SPEC.md` (*Debate: Scoreboard numbers…*, *Seasonal labor…*, Open Question **7**).
 
-**Single-owner install (each PWA):** Partner **A** = the human whose phone it is; Partner **B** = their spouse. **Awards always credit B**; **requests always come from A**. There is **no** main-screen control to impersonate the other partner—you send to them via Messages, they maintain the same two totals on their copy. Settings on each device label A as “you” and B as “your spouse.” When a `#state=` packet arrives, `index.html` may **swap incoming `a`/`b`** for scores and flip `pending[].requester` if the sender’s `names` order is opposite the receiver’s (packet names stay for SMS legibility + orientation; **local name fields are not overwritten** from the link). Full write-up: `SPEC.md` (*Core Mechanics*, *Persistence & Device Model*).
+**Single-owner install (each PWA):** Partner **A** = the human whose phone it is; Partner **B** = their spouse. **Awards always credit B**; **requests always come from A**. There is **no** main-screen control to impersonate the other partner - you send to them via Messages, they maintain the same two totals on their copy. Settings on each device label A as “you” and B as “your spouse.” When a `#state=` packet arrives, `index.html` may **swap incoming `a`/`b`** for scores and flip `pending[].requester` if the sender’s `names` order is opposite the receiver’s (packet names stay for SMS legibility + orientation; **local name fields are not overwritten** from the link). Full write-up: `SPEC.md` (*Core Mechanics*, *Persistence & Device Model*).
 
 ---
 
@@ -469,7 +469,7 @@ Use this as the pre-beta evidence log. Fill date/owner/device details as you exe
 - [ ] After fix (if needed): A1–A4 rerun completed and passed
 
 **Blocker B — multi-select awards prototype evaluation**
-- [x] Settings toggle implemented: "Enable multi-select awards (beta)" (default OFF)
+- [x] Settings toggle implemented: "Enable multi-select awards (beta)" (currently initializes ON for fresh local state)
 - [ ] Single-select baseline run completed (5 sends)
 - [ ] Baseline median send time captured: __________
 - [ ] Multi-select trial run completed (5 sends)
