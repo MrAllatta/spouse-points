@@ -19,6 +19,7 @@
 - **No visible A/B language:** keep slotting internals for sync logic, but remove A/B wording from UI copy and SMS body.
 - **Caveman copy pass:** simplify action labels and helper text to plain one-step language (e.g., "I noticed you did X", "I did X, notice me", "Give points", "Not this one").
 - **One-message vocabulary:** the same plain-language frame must appear in button labels, toasts, and precomposed SMS text.
+- **Desktop handoff strategy:** detect non-mobile and switch from `sms:` auto-open to copy-first UX. Do not auto-open Messages on desktop; show "Copy this and send it to [Name]" and a large **Copy Message** button.
 
 **Gate test (single exhausted parent):**
 - Give only one prompt: "Use this with your partner."
