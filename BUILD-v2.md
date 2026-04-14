@@ -469,7 +469,7 @@ Use this as the pre-beta evidence log. Fill date/owner/device details as you exe
 - [ ] After fix (if needed): A1–A4 rerun completed and passed
 
 **Blocker B — multi-select awards prototype evaluation**
-- [ ] Settings toggle implemented: "Enable multi-select awards (beta)" (default OFF)
+- [x] Settings toggle implemented: "Enable multi-select awards (beta)" (default OFF)
 - [ ] Single-select baseline run completed (5 sends)
 - [ ] Baseline median send time captured: __________
 - [ ] Multi-select trial run completed (5 sends)

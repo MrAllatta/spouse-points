@@ -842,6 +842,30 @@
       border-top: 1px solid var(--border);
     }
 
+    .settings-toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      margin-top: 0.45rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .settings-toggle-label {
+      font-size: 0.9rem;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    .settings-toggle-input {
+      width: 1.1rem;
+      height: 1.1rem;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
     .settings-done {
       width: 100%;
       margin-top: 1.35rem;
@@ -978,6 +1002,15 @@
       <span class="settings-point-label">✨ Custom / other (no grid button)</span>
       <input type="number" class="settings-point-input" min="0" max="999999999" step="1"
              id="settings-custom-points-input" onchange="onCustomPointChange(this)" data-key="custom" />
+    </div>
+    <div class="settings-toggle-row">
+      <span class="settings-toggle-label">Enable multi-select awards (beta)</span>
+      <input
+        type="checkbox"
+        class="settings-toggle-input"
+        id="settings-multiselect-toggle"
+        onchange="onMultiSelectToggleChange(this)"
+      />
     </div>
 
     <button type="button" class="settings-done" onclick="closeSettings()">Done</button>
@@ -1131,6 +1164,7 @@
 
     let state = {
       selectedCategory: null,
+      selectedAwardCategories: [],
       mode: "award",
       multiplier: 1,
       scores: { a: 0, b: 0 },
@@ -1140,6 +1174,7 @@
       categories: [],
       microMomentShown: null,
       microMomentPending: false,
+      betaMultiSelectAwards: true,
       nameSetupHintShown: false,
       lastAppliedPacketTs: 0,
     };
@@ -1185,7 +1220,11 @@
         btn.textContent = `${cat.emoji} ${cat.label}`;
         btn.dataset.key = cat.key;
         btn.onclick = () => selectCategory(cat.key, btn);
-        if (state.selectedCategory === cat.key) btn.classList.add("selected");
+        const isSelectedSingle = state.selectedCategory === cat.key;
+        const isSelectedMulti = state.mode === "award" &&
+          state.betaMultiSelectAwards &&
+          state.selectedAwardCategories.includes(cat.key);
+        if (isSelectedSingle || isSelectedMulti) btn.classList.add("selected");
         grid.appendChild(btn);
       });
     }
@@ -1320,6 +1359,7 @@
       renderCategoryButtons();
       renderSettingsCategoryEditor();
       syncCustomPointsInputFromState();
+      syncMultiSelectToggleFromState();
       syncNames();
       const copyBtn = document.getElementById("desktop-handoff-copy");
       if (copyBtn) copyBtn.addEventListener("click", copyDesktopHandoffMessage);
@@ -1372,6 +1412,21 @@
       saveState();
     }
 
+    function syncMultiSelectToggleFromState() {
+      const el = document.getElementById("settings-multiselect-toggle");
+      if (!el) return;
+      el.checked = !!state.betaMultiSelectAwards;
+    }
+
+    function onMultiSelectToggleChange(el) {
+      state.betaMultiSelectAwards = !!el.checked;
+      if (!state.betaMultiSelectAwards) state.selectedAwardCategories = [];
+      if (state.mode === "award") state.selectedCategory = null;
+      saveState();
+      renderCategoryButtons();
+      updateRoleHint();
+    }
+
     function openSettings() {
       if (!namesAreReady() && !state.nameSetupHintShown) {
         state.nameSetupHintShown = true;
@@ -1380,6 +1435,7 @@
       }
       renderSettingsCategoryEditor();
       syncCustomPointsInputFromState();
+      syncMultiSelectToggleFromState();
       document.getElementById("settings-backdrop").classList.add("open");
       document.getElementById("settings-panel").classList.add("open");
     }
@@ -1450,7 +1506,11 @@
         return;
       }
       if (state.mode === "award") {
-        el.textContent = `Tap one item, then Give Points to ${spouse}.`;
+        if (state.betaMultiSelectAwards) {
+          el.textContent = `Tap one or more items, then Give Points to ${spouse}.`;
+        } else {
+          el.textContent = `Tap one item, then Give Points to ${spouse}.`;
+        }
       } else {
         el.textContent = `Pick what you did, then Send Request to ${spouse}.`;
       }
@@ -1501,6 +1561,10 @@
 
     function setMode(mode) {
       state.mode = mode;
+      if (mode !== "award") {
+        state.selectedAwardCategories = [];
+        document.querySelectorAll(".category-btn").forEach((b) => b.classList.remove("selected"));
+      }
       document.getElementById("mode-award").classList.toggle("active", mode === "award");
       document.getElementById("mode-request").classList.toggle("active", mode === "request");
       document.getElementById("section-heading").textContent =
@@ -1521,6 +1585,17 @@
     }
 
     function selectCategory(key, btn) {
+      if (state.mode === "award" && state.betaMultiSelectAwards) {
+        const idx = state.selectedAwardCategories.indexOf(key);
+        if (idx >= 0) {
+          state.selectedAwardCategories.splice(idx, 1);
+          btn.classList.remove("selected");
+        } else {
+          state.selectedAwardCategories.push(key);
+          btn.classList.add("selected");
+        }
+        return;
+      }
       document.querySelectorAll(".category-btn").forEach((b) => b.classList.remove("selected"));
       if (state.selectedCategory === key) {
         state.selectedCategory = null;
@@ -1547,18 +1622,35 @@
     function awardPoints() {
       const custom = document.getElementById("custom-reason").value.trim();
       const cat = state.selectedCategory;
-      if (!cat && !custom) return;
+      const selectedKeys = state.betaMultiSelectAwards
+        ? state.selectedAwardCategories.slice()
+        : [];
+      if (!cat && !custom && selectedKeys.length === 0) return;
 
-      const key = cat || "custom";
-      const points = pointsForKey(key) * state.multiplier;
-      const pool = quips[key] || quips.custom;
+      let points = 0;
+      let categoryLabel = "Custom";
+      let keyForQuip = "custom";
+      let detail = custom || undefined;
+
+      if (state.betaMultiSelectAwards && selectedKeys.length > 0) {
+        const labels = selectedKeys.map((k) => categoryLabelForKey(k) || "Custom");
+        const base = selectedKeys.reduce((sum, k) => sum + pointsForKey(k), 0);
+        points = base * state.multiplier;
+        categoryLabel = labels.join(", ");
+        keyForQuip = selectedKeys[0] || "custom";
+      } else {
+        const key = cat || "custom";
+        points = pointsForKey(key) * state.multiplier;
+        categoryLabel = cat ? categoryLabelForKey(cat) || "Custom" : "Custom";
+        keyForQuip = key;
+      }
+
+      const pool = quips[keyForQuip] || quips.custom;
       const quip = pool[Math.floor(Math.random() * pool.length)];
 
       const recipient = "b";
       const nameEl = document.getElementById(`name-${recipient}`);
       const recipientName = nameEl.value || "Your spouse";
-      const categoryLabel = cat ? categoryLabelForKey(cat) || "Custom" : "Custom";
-      const detail = custom || undefined;
       const whatNoticed = ledgerWhatLine({ category: categoryLabel, detail });
 
       state.scores[recipient] += points;
@@ -1657,6 +1749,7 @@
       document.getElementById("custom-reason").value = "";
       document.querySelectorAll(".category-btn").forEach((b) => b.classList.remove("selected"));
       state.selectedCategory = null;
+      state.selectedAwardCategories = [];
       setMultiplier(1);
     }
 
@@ -1849,6 +1942,7 @@
         categories: state.categories,
         microMomentShown: state.microMomentShown,
         microMomentPending: state.microMomentPending,
+        betaMultiSelectAwards: state.betaMultiSelectAwards,
         nameSetupHintShown: state.nameSetupHintShown,
         lastAppliedPacketTs: state.lastAppliedPacketTs,
         names: {
@@ -1910,6 +2004,11 @@
           state.microMomentPending = data.microMomentPending;
         } else {
           state.microMomentPending = false;
+        }
+        if (typeof data.betaMultiSelectAwards === "boolean") {
+          state.betaMultiSelectAwards = data.betaMultiSelectAwards;
+        } else {
+          state.betaMultiSelectAwards = true;
         }
         if (typeof data.nameSetupHintShown === "boolean") {
           state.nameSetupHintShown = data.nameSetupHintShown;
