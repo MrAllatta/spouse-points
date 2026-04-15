@@ -395,6 +395,20 @@ if ("serviceWorker" in navigator) {
 
 **Done when:** On desktop, after **Copy Message** succeeds, the user does not perceive a **lingering or competing** `#toast` state (manual QA: award → copy within 1s, at ~3s after award, and after waiting for celebration to almost expire). Request flow gets the same treatment. No orphaned `setTimeout` still firing after a newer toast state has taken over.
 
+**Product expectation (2026-04-14):** On **non-mobile**, once the user has successfully copied the handoff text, **copy-related `#toast` feedback should clear on a predictable, short timer** (or move to inline control state only) so attention returns to the handoff card or the main UI — not an unrelated celebration timer firing later. Coordinate so the **“Copied”** path does not leave the global toast feeling stuck **or** bring back a stale celebration after copy.
+
+---
+
+### Logged polish — Post-name Messages explainer toast (`messageAppOnboardingShown`)
+
+**Field report (2026-04-14):** Right after both names validate, `maybeShowPostNameMicroMoment()` in `index.html` fires a one-time `showInfoToast("Heads up", "After setup, we'll open your Messages app …", 5600)`. Testers read this as the **“we will open Messages / send from Messages”** heads-up. It **auto-dismisses in ~5.6s**, which can feel **too fast** before the user finishes reading or before any deliberate action.
+
+**Desired behavior:** Treat as **sticky onboarding**, not a transient celebration: keep visible until an explicit user action (e.g. **Got it** / **Dismiss** on the toast, or another agreed primary action such as closing the post-name micro-moment) — **not** only a fixed timeout. Still persist `messageAppOnboardingShown` so it does not repeat on later visits.
+
+**Implementation sketch:** `showInfoToast(..., 0)` to disable auto-hide for this variant **plus** a dismiss control that calls `hideInfoToast()`; or render this copy inside the micro-moment sheet instead of `#toast` so dismissal is unified with “continue.”
+
+**Cross-links:** Pre-beta gate *Post-name micro-moment* above; `SPEC.md` beta feedback if this gets a formal field note.
+
 ---
 
 ## Testing Checklist
@@ -413,7 +427,8 @@ if ("serviceWorker" in navigator) {
 - [x] Single-owner flow: no partner switcher; awards to B, requests from A; link apply swaps A/B when sender/receiver slotting differs *(see `SPEC.md`)*
 - [x] No in-app reset to wipe scores/ledger (verify absent in Settings); fresh start only via OS / private window / clear site data*
 - [x] Desktop: SMS handoff degrades gracefully (handoff panel + toast; URL is in the copied body) *(implemented; confirm on device)*
-- [ ] Desktop: after **Copy Message**, `#toast` does not feel stuck or double-driven *(Build Step 12; coordinate celebration dismiss vs `infoToastTimer`; manual QA)*
+- [ ] Desktop: after **Copy Message**, `#toast` does not feel stuck or double-driven; **copy confirmation dismisses soon after a successful copy** *(Build Step 12; coordinate celebration dismiss vs `infoToastTimer`; manual QA)*
+- [ ] Post-name **Heads up** / Messages explainer toast: readable without racing the timer — **sticky until dismiss** (or agreed action), not only ~5.6s auto-hide *(logged polish section **Post-name Messages explainer toast**; `maybeShowPostNameMicroMoment` / `showInfoToast` today)*
 - [x] PWA: installs to home screen on iOS and Android *(Step 10; confirm on device)*
 - [x] Offline: app loads after install with no network *(Step 10; confirm on device)*
 

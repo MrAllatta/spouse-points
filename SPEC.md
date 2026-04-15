@@ -125,6 +125,22 @@ The ratio of spontaneous to requested awards over time is the real signal.
 
 **Ledger vs. quips:** Quips are for the immediate award moment (toast, energy). The ledger row should read as *what was noticed* first — recipient, category (and optional detail), points, and tags — with the quip de-emphasized on a second line when present. The pre-filled outbound message follows the same priority so the text thread stays legible as a record, not a joke log.
 
+#### Field record — Ledger framing (“noticed”) is easy to misread
+
+**Observed (field):** In use, calling the surface a **ledger** without tightening the noun invites the mental model people already carry for ledgers — **what I have / what I received** — i.e. a running account of credits *to me*. That collides with the shipped intent: the ledger is primarily **a record of what you noticed** (outbound attention you named), which can look “wrong” or incomplete if someone expects a symmetric transcript of everything their partner noticed about *them*.
+
+**Candidate mitigations (not mutually exclusive):**
+
+- **Rename in UI copy** — e.g. **“Ledger of noticings”** (or similar): keeps “ledger” if we want the familiar weight of a durable log, but forces the right genus: entries are *noticings*, not a neutral balance sheet of self.
+- **Two-way ledger (optional product direction)** — a mode or tab that makes **both partners’ outbound noticings** legible in one place, without pretending the per-install ledger is already that artifact. This addresses the “incomplete” feeling without smuggling in a courtroom transcript; it still rewards the core mechanic (naming what you saw) rather than reframing the whole product as “what I got.”
+- **Reframe as “received” (rejected as default)** — lean into the natural ledger metaphor (*what I have*) for instant comprehension. We are **not** pursuing that as the primary frame, because **noticing as the moral center** is the thesis; optimizing for “my haul” would run with the grain of scorekeeping and against the grain of the mirror we want.
+
+**Additional notes (rationale we agree with):**
+
+- The tension is real and worth shipping against explicitly: **“ledger” is a borrowed word** from money and obligation; users will import baggage. Small copy surgery (“noticings,” “your notices,” “things you named”) is cheap insurance against a misread that feels like a bug.
+- A **two-way** presentation, if we ever build it, should still be framed as **two streams of attention**, not a merged adjudication log — otherwise we drift toward evidence and “who said what,” which fails the **Courtroom Test**.
+- Keeping **outbound noticing** as the default ledger preserves alignment with **private awards don’t exist** and with the idea that the archive is **your** practice of naming, not a third-party ledger of truth about the relationship.
+
 ---
 
 ## Design choice: In-app reset (scores / ledger)
@@ -378,7 +394,7 @@ The `index.html` prototype is a functional proof of concept for:
 - **Settings** slide-up (header gear): you/spouse names, **category CRUD** (reorder / edit / add / delete with pending guard), per-category point inputs, backdrop / Done / Escape to close; names are **in** the `#state=` packet for SMS + orientation; **local** name fields stay yours; overrides stay on-device
 - **Multi-select awards toggle (beta):** optional Settings switch for selecting multiple categories in one award action; grouped awards sum selected category points, then apply multiplier, and send one ledger/SMS line
 - URL-as-state sync packet (`#state=` hash, base64 JSON) with load-time apply, **A/B swap when the sender’s “who is A” differs from this phone**, **onboarding toast** after link open when names are still placeholders or don’t match the packet, and hash strip
-- Messages (`sms:`) handoff after spontaneous award, after request, and after awarding a pending request (on **desktop**: `#desktop-handoff` + **Copy Message** + `#toast` celebration; toast/copy timing polish is **BUILD-v2.md** Step 11); pre-filled SMS follows *Core Mechanics* (points, recipient, what was noticed, link — quip stays in-app)
+- Messages (`sms:`) handoff after spontaneous award, after request, and after awarding a pending request (on **desktop**: `#desktop-handoff` + **Copy Message** + `#toast` celebration; toast/copy timing polish is **BUILD-v2.md** Step 12); pre-filled SMS follows *Core Mechanics* (points, recipient, what was noticed, link — quip stays in-app)
 - **iOS Safari (in-browser):** one-time toast after a mobile Messages handoff (and a delayed fallback) nudging **Share → scroll if Add to Home Screen is off-screen → Add to Home Screen**; dismissal stored in the same localStorage blob as other client flags
 - Pass dismiss with **no** ledger row (**“Not this one”**), matching the URL model
 - The emotional tone of the quip writing
@@ -400,7 +416,7 @@ Entries are **internal QA notes** (relationship disclosed where it affects tone)
 
 - **Field report (non-mobile):** After an award or request, the **desktop handoff** panel appears with pre-filled text and a **Copy Message** control; that part reads correctly. After a successful copy, the **floating `#toast`** (`.result-toast`) **remains on screen** for a stretch — either the “Copied” confirmation feels like it lingers, or the earlier celebration/request toast and the copy feedback **stack awkwardly** in time. Expectation from the session: once the message is copied, the chrome should get out of the way faster (or a single clear success state), not a toast that still occupies attention.
 - **Likely cause (implementation):** In `index.html`, `showToast()` and the inline path in `showRequestToastThenHandoff()` schedule `setTimeout(() => toast.classList.remove("show"), 3500)` **without retaining or clearing** that timer. `copyDesktopHandoffMessage()` then calls `showInfoToast(...)`, which uses a **separate** `infoToastTimer`. The two systems do not cancel each other, so dismiss timing is tied to **two independent clocks** (award/request start vs. copy confirmation), which is brittle and can read as “stuck” or redundant beside the handoff card.
-- **Planned fix / polish:** See `BUILD-v2.md` **Step 11 — Desktop handoff: toast lifecycle after Copy** (single coordinated timer, clear celebration dismiss on copy or when handoff opens, and/or inline feedback on the button instead of a second toast).
+- **Planned fix / polish:** See `BUILD-v2.md` **Step 12 — Desktop handoff: toast lifecycle after Copy** (single coordinated timer, clear celebration dismiss on copy or when handoff opens, and/or inline feedback on the button instead of a second toast). **Product note:** on non-mobile, copy confirmation should **dismiss on a short, predictable cadence after a successful copy** (see Step 12 *Product expectation*).
 
 ### 2026-04 — first beta session (sister)
 
