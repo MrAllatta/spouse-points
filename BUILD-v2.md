@@ -488,6 +488,7 @@ If any box fails, treat it as a blocker and fix copy/flow before expanding the t
 - **Next tests (pick the branch that matches what actually happened):**
   - **A — Link-only receiver:** If the only action was “open partner’s `#state=` link,” decide whether the gap is **expected by design** vs a **UX / copy** problem (people assume the ledger mirrors the thread). Capture whether `pending` looked correct when totals moved.
   - **B — Local action bug:** If the receiver (or sender) performed an **award / resolve** that should have called the normal `history` write path **on that same device** and the ledger still failed to update while totals changed, treat as a **defect candidate**: file repro with devices, OS/browser, build/commit, screenshots, and decoded packet (`scores`, `pending`, `ts`).
+- **Terminology clarity note (added 2026-04-15):** The ledger framing is still easy to misread. Product intent is that it is a **ledger of what you noticed about your partner**, not a log of what they noticed about you. Treat this as a subtle but correct model shift, and at minimum update UI/copy references to explicitly say **"ledger of what you noticed"** to reduce confusion.
 
 ### Post–v2 launch field report — stale scoreboard until manual refresh (2026-04-14)
 
@@ -681,6 +682,39 @@ Product-wise, that wastes horizontal space: two modest columns with the current 
 - Re-check award mode and request mode (same grid), multi-select on/off, and settings with **many** categories and **long** labels on iOS Safari and Android Chrome.
 
 **Non-goals for this item:** changing category data model, SMS copy, or sync behavior — layout only.
+
+---
+
+## Staged design decision — custom points placement + quip model
+
+**Captured:** 2026-04-15. **Intent:** stage for future implementation in both v1 and v2 UI surfaces.
+
+### Decision
+
+- **Custom points should be surfaced at the top** of the points controls (higher visual priority than today).
+- The current behavior puts the custom field at the bottom in both v1 and v2; this stays as-is until the staged change is implemented.
+- Revisit quip usage in the award flow: **presets can remain**, but self-facing quips on local ledger actions should be deprioritized or removed.
+
+### Why this changed
+
+- Earlier versions prioritized presets and funny quips first.
+- Product reality: this is a **text messaging tool** that creates structure around sending your spouse a message like "I noticed."
+- The core expectation is that users write their own message because they should; defaults are helpers, not the main event.
+- Quips are funniest when **received by your partner** in context. A quip shown to yourself while logging your own local award/ledger action usually does not add meaning.
+
+### Staged implementation direction
+
+- Move custom points input/control to the top of the relevant points UI in both v1 and v2.
+- Keep default presets available, but treat them as optional accelerators.
+- Use the selected quip as the **default outbound message text** when sending an award (editable before send), since that is the partner-facing moment.
+- Do not use quip copy as local ledger text; ledger entries should remain plain "what you noticed" records.
+- Update any related helper copy to reinforce the "notice + send" behavior over "pick a funny line for yourself."
+
+### Non-goals for this staged item
+
+- No immediate refactor of sync packet shape.
+- No change to score math or pending-request semantics.
+- No change to category CRUD model.
 
 ---
 
