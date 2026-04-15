@@ -401,10 +401,12 @@ Run this gate **before** any wider beta share:
   - no auto-open Messages on desktop
   - show: "Copy this and send it to [Name]"
   - provide a large, obvious **Copy Message** button
-- [ ] **Exhausted-parent test:** one tired parent gets one prompt ("Use this with your partner"), then completes onboarding + award + request without coaching.
-- [ ] **Pass line:** tester never asks "Wait, what am I supposed to do?"
+- [x] **Exhausted-parent test:** one tired parent gets one prompt ("Use this with your partner"), then completes onboarding + award + request without coaching.
+- [x] **Pass line:** tester never asks "Wait, what am I supposed to do?"
 
-Status (2026-04-14): Product-side clarity fixes (including desktop copy-first handoff) landed in `index.html`; the multi-select toggle is implemented and currently initializes **on** for fresh local state; human exhausted-parent test is still required before wider beta share.
+**Exhausted-parent gate result (2026-04-14):** Session passed the pass line: app was **opened, used, and a message was sent** without the tester asking what to do next. **Caveat:** not a fully cold first touch (some prior familiarity), but treated as **gate passed** for pre-beta clarity. Product-side items above remain as shipped; wider beta can proceed subject to other blockers (e.g. sync burst matrix in `ROADMAP-12w.md`).
+
+Status (2026-04-14): Clarity fixes (including desktop copy-first handoff) are in `index.html`; multi-select initializes **on** for fresh local state; **exhausted-parent human gate completed** as above.
 
 If any box fails, treat it as a blocker and fix copy/flow before expanding the tester pool.
 
