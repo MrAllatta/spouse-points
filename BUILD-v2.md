@@ -36,10 +36,13 @@
 | 9 | Category CRUD in Settings | Shipped |
 | 10 | PWA (installable) | Shipped |
 | 11 | Lifecycle re-entry for `#state=` (Messages / resume / bfcache) | Planned |
+| 12 | Desktop handoff: toast lifecycle after Copy | Logged — see Step 12 below |
 
 ---
 
 ## Build Steps
+
+**Numbering:** Steps **1–12** here match the **Progress** table above (including planned **11** / logged **12**). There is no separate “patch-only” step index.
 
 ### Step 1 — Fixed point values per category
 **Replace random 1–3 with a lookup table.**
@@ -115,33 +118,7 @@ function checkHashState() {
 
 **Done when:** generating a URL, opening it in a second browser tab, and seeing the correct scores and pending state load; with default names still in place, an onboarding-style toast appears once per link open until names are set.
 
-### Patch plan — lifecycle re-entry for `#state=` (Messages / PWA)
-
-**Problem:** `SPEC.md` field note (2026-04-14) — after a partner sends a sync URL in Messages, the recipient can land on a **foreground app** whose **scoreboard still shows old totals** until a manual full refresh.
-
-**Cause (current `index.html`):** `checkHashState()` is invoked from `init()` **once** at first script run. Mobile reuse of an existing tab or standalone shell, return from Messages without a cold navigation, or **bfcache** (`pageshow` with `event.persisted`) can skip that boot path even when `#state=` is present or `localStorage` already reflects a merged packet.
-
-**Goal:** Re-run the same **idempotent** apply / render path whenever the document becomes relevant again — **without** `location.reload()` as the default behavior.
-
-**Implementation outline (single-file constraint):**
-
-1. **One resume entrypoint** — e.g. `resumeSyncFromNavigation()` that:
-   - If `location.hash` starts with `#state=`, run the same logic as today’s `checkHashState()` (decode → `applyPacket` → `maybeShowSyncOnboardingToast` on success → strip hash via `history.replaceState`).
-   - If there is **no** `#state=` on this activation, optionally **rehydrate scores + pending from `localStorage`** and refresh their DOM (`score-a` / `score-b`, `renderPending()`), so a merge that happened while the page was frozen still paints. Prefer a **narrow** helper over duplicating all of `loadState()` unless audit shows `loadState()` is safe to call on every `visibilitychange` (watch for fighting in-flight Settings edits, micro-moment state, and double DOM work).
-2. **Subscribe once after `init()` baseline:**
-   - `window.addEventListener("pageshow", (ev) => { if (ev.persisted) resumeSyncFromNavigation(); })` for **bfcache** restores.
-   - `window.addEventListener("hashchange", resumeSyncFromNavigation)` for fragment updates without a full load.
-   - `document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") resumeSyncFromNavigation(); })` for return from Messages / app switcher. If `pageshow` + `visibilitychange` double-fire, rely on idempotency: second call should no-op once hash is cleared / `applyPacket` returns false for stale `ts`.
-3. **Do not weaken** `lastAppliedPacketTs` stale guard inside `applyPacket`. Keep onboarding toast tied to **`applyPacket` returned `true`** on that invocation so duplicate events do not stack toasts.
-4. **Optional short-lived logging** (commented or behind a throwaway flag) while validating iOS standalone vs Safari; remove before calling the patch done.
-
-**QA / done when:**
-
-- **iOS matrix:** Safari tab **and** Home Screen standalone — app **already in background**, tap new incoming link in Messages → scores + pending match a **decoded** packet within ~1s of foreground **without** manual refresh.
-- **Desktop Chrome:** navigate away and **Back** to a bfcached document → UI still matches storage after resume.
-- **Regression:** cold `init()` path unchanged; burst / **newest-`ts`-wins** tests in this doc still pass.
-
-**Related spec:** `SPEC.md` *Field note (2026-04-14): stale scoreboard after link from Messages*.
+**Beyond cold load:** returning to an already-open tab/PWA with a new `#state=` (Messages, bfcache, app resume) is **Step 11 — Lifecycle re-entry** below — same numbering as the Progress table.
 
 ---
 
@@ -373,11 +350,58 @@ if ("serviceWorker" in navigator) {
 
 ---
 
+### Step 11 — Lifecycle re-entry for `#state=` (Messages / PWA)
+
+**Problem:** `SPEC.md` field note (2026-04-14) — after a partner sends a sync URL in Messages, the recipient can land on a **foreground app** whose **scoreboard still shows old totals** until a manual full refresh.
+
+**Cause (current `index.html`):** `checkHashState()` is invoked from `init()` **once** at first script run. Mobile reuse of an existing tab or standalone shell, return from Messages without a cold navigation, or **bfcache** (`pageshow` with `event.persisted`) can skip that boot path even when `#state=` is present or `localStorage` already reflects a merged packet.
+
+**Goal:** Re-run the same **idempotent** apply / render path whenever the document becomes relevant again — **without** `location.reload()` as the default behavior.
+
+**Implementation outline (single-file constraint):**
+
+1. **One resume entrypoint** — e.g. `resumeSyncFromNavigation()` that:
+   - If `location.hash` starts with `#state=`, run the same logic as today's `checkHashState()` (decode → `applyPacket` → `maybeShowSyncOnboardingToast` on success → strip hash via `history.replaceState`).
+   - If there is **no** `#state=` on this activation, optionally **rehydrate scores + pending from `localStorage`** and refresh their DOM (`score-a` / `score-b`, `renderPending()`), so a merge that happened while the page was frozen still paints. Prefer a **narrow** helper over duplicating all of `loadState()` unless audit shows `loadState()` is safe to call on every `visibilitychange` (watch for fighting in-flight Settings edits, micro-moment state, and double DOM work).
+2. **Subscribe once after `init()` baseline:**
+   - `window.addEventListener("pageshow", (ev) => { if (ev.persisted) resumeSyncFromNavigation(); })` for **bfcache** restores.
+   - `window.addEventListener("hashchange", resumeSyncFromNavigation)` for fragment updates without a full load.
+   - `document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") resumeSyncFromNavigation(); })` for return from Messages / app switcher. If `pageshow` + `visibilitychange` double-fire, rely on idempotency: second call should no-op once hash is cleared / `applyPacket` returns false for stale `ts`.
+3. **Do not weaken** `lastAppliedPacketTs` stale guard inside `applyPacket`. Keep onboarding toast tied to **`applyPacket` returned `true`** on that invocation so duplicate events do not stack toasts.
+4. **Optional short-lived logging** (commented or behind a throwaway flag) while validating iOS standalone vs Safari; remove before calling the patch done.
+
+**QA / done when:**
+
+- **iOS matrix:** Safari tab **and** Home Screen standalone — app **already in background**, tap new incoming link in Messages → scores + pending match a **decoded** packet within ~1s of foreground **without** manual refresh.
+- **Desktop Chrome:** navigate away and **Back** to a bfcached document → UI still matches storage after resume.
+- **Regression:** cold `init()` path unchanged; burst / **newest-`ts`-wins** tests in this doc still pass.
+
+**Related spec:** `SPEC.md` *Field note (2026-04-14): stale scoreboard after link from Messages*.
+
+---
+
+### Step 12 — Desktop handoff: toast lifecycle after Copy
+
+**Field report:** On desktop, after an award or request, `#desktop-handoff` shows with **Copy Message**; copying works. The **`#toast`** banner often **still draws attention afterward** — the “Copied” info state can feel slow or the earlier celebration/request toast and copy feedback **overlap in time** because two different timer mechanisms drive the same DOM node.
+
+**Root cause (current `index.html`):** `showToast()` and `showRequestToastThenHandoff()` each fire `setTimeout(() => toast.classList.remove("show"), 3500)` **without saving the handle** or clearing it when the flow changes. `copyDesktopHandoffMessage()` calls `showInfoToast(...)`, which only manages `infoToastTimer`. The celebration/request dismiss timer and the info-toast timer **do not coordinate**, so `.show` / content transitions are order-dependent and easy to misread as a bug.
+
+**Direction (pick one coherent approach — can combine):**
+
+1. **Single dismiss pipeline:** Introduce something like `toastDismissTimer` (or reuse one module) for *any* auto-hide of `#toast`. Clear it whenever showing a new toast (`showToast`, `showInfoToast`, copy success/failure, opening handoff).
+2. **Clear celebration timer on copy:** In `copyDesktopHandoffMessage()` after a successful write, `clearTimeout` the same handle `showToast` / request handoff registered (requires those paths to assign `toastDismissTimer = setTimeout(...)` and export clearing via a small `clearAutoToastDismiss()` helper).
+3. **Reduce redundancy on desktop:** When `showDesktopHandoff()` runs, immediately **hide the floating toast** (`hideInfoToast()` + remove `.show` + clear any pending celebration dismiss) so the only surface is the handoff card; use **button label** or a brief inline “Copied” on the copy control instead of a second global toast.
+4. **Always cancel on transition:** Any code path that replaces toast content must cancel **all** pending hide timers that target `#toast`.
+
+**Done when:** On desktop, after **Copy Message** succeeds, the user does not perceive a **lingering or competing** `#toast` state (manual QA: award → copy within 1s, at ~3s after award, and after waiting for celebration to almost expire). Request flow gets the same treatment. No orphaned `setTimeout` still firing after a newer toast state has taken over.
+
+---
+
 ## Testing Checklist
 
 - [x] Award points → Messages opens with sync link on mobile; SMS body has what was noticed + link, **no quip** *(implemented; confirm on device)*
 - [x] Partner taps link → correct scores and pending load → hash clears; local ledger unchanged; local Settings names unchanged; **onboarding toast** when names still default or don’t match packet *(implemented; confirm on device)*
-- [ ] **Lifecycle re-entry (Step 11):** with PWA or tab **already open**, return from Messages via incoming `#state=` link → scores/pending update **without** manual refresh; bfcache back-navigation still correct *(see Patch plan under Step 2)*
+- [ ] **Lifecycle re-entry (Build Step 11):** with PWA or tab **already open**, return from Messages via incoming `#state=` link → scores/pending update **without** manual refresh; bfcache back-navigation still correct *(see **Step 11** in Build Steps)*
 - [x] Request points → Messages opens with request text and link *(implemented; confirm on device)*
 - [x] Partner taps link → pending request surfaces → Award it → **return** Messages opens with updated sync link (celebration leg) *(implemented; confirm on device)*
 - [x] Pass a request → no message sent, request disappears, no ledger entry *(implemented; confirm on device)*
@@ -388,7 +412,8 @@ if ("serviceWorker" in navigator) {
 - [x] New category uses correct points; unknown key on partner device resolves with fallback quips *(Step 9)*
 - [x] Single-owner flow: no partner switcher; awards to B, requests from A; link apply swaps A/B when sender/receiver slotting differs *(see `SPEC.md`)*
 - [x] No in-app reset to wipe scores/ledger (verify absent in Settings); fresh start only via OS / private window / clear site data*
-- [x] Desktop: SMS handoff degrades gracefully (shows URL in toast) *(implemented; confirm on device)*
+- [x] Desktop: SMS handoff degrades gracefully (handoff panel + toast; URL is in the copied body) *(implemented; confirm on device)*
+- [ ] Desktop: after **Copy Message**, `#toast` does not feel stuck or double-driven *(Build Step 12; coordinate celebration dismiss vs `infoToastTimer`; manual QA)*
 - [x] PWA: installs to home screen on iOS and Android *(Step 10; confirm on device)*
 - [x] Offline: app loads after install with no network *(Step 10; confirm on device)*
 
@@ -412,10 +437,12 @@ Run this gate **before** any wider beta share:
   - no auto-open Messages on desktop
   - show: "Copy this and send it to [Name]"
   - provide a large, obvious **Copy Message** button
-- [ ] **Exhausted-parent test:** one tired parent gets one prompt ("Use this with your partner"), then completes onboarding + award + request without coaching.
-- [ ] **Pass line:** tester never asks "Wait, what am I supposed to do?"
+- [x] **Exhausted-parent test:** one tired parent gets one prompt ("Use this with your partner"), then completes onboarding + award + request without coaching.
+- [x] **Pass line:** tester never asks "Wait, what am I supposed to do?"
 
-Status (2026-04-14): Product-side clarity fixes (including desktop copy-first handoff) landed in `index.html`; the multi-select toggle is implemented and currently initializes **on** for fresh local state; human exhausted-parent test is still required before wider beta share.
+**Exhausted-parent gate result (2026-04-14):** Session passed the pass line: app was **opened, used, and a message was sent** without the tester asking what to do next. **Caveat:** not a fully cold first touch (some prior familiarity), but treated as **gate passed** for pre-beta clarity. Product-side items above remain as shipped; wider beta can proceed subject to other blockers (e.g. sync burst matrix in `ROADMAP-12w.md`).
+
+Status (2026-04-14): Clarity fixes (including desktop copy-first handoff) are in `index.html`; multi-select initializes **on** for fresh local state; **exhausted-parent human gate completed** as above.
 
 If any box fails, treat it as a blocker and fix copy/flow before expanding the tester pool.
 
@@ -451,7 +478,7 @@ If any box fails, treat it as a blocker and fix copy/flow before expanding the t
 
 - **Reported experience:** URLs exchanged in Messages; opening a link does not always force a cold load; **points stay invisible or wrong on screen** until the user manually refreshes.
 - **Classification:** Treat as **client lifecycle / navigation** (init-only `#state=` handling), not “bad packet,” when a full refresh fixes the UI. Capture whether `#state=` was still in the address bar when broken.
-- **Planned fix:** **Step 11** in the progress table — implementation steps and QA matrix live under **Patch plan — lifecycle re-entry for `#state=`** immediately after Step 2 in this file; product framing in `SPEC.md` *Field note (2026-04-14): stale scoreboard after link from Messages*.
+- **Planned fix:** **Build Step 11 — Lifecycle re-entry for `#state=`** (Progress row 11); implementation steps and QA matrix are in that section below Step 10. Encode/decode baseline remains **Step 2** above. Product framing in `SPEC.md` *Field note (2026-04-14): stale scoreboard after link from Messages*.
 
 ### Pre-beta blocker execution plan (2026-04-14)
 
@@ -530,7 +557,7 @@ Use this as the pre-beta evidence log. Fill date/owner/device details as you exe
 - [ ] A1–A4 all PASS (or PASS after documented fix/rerun)
 - [ ] Multi-select decision documented with evidence
 - [ ] Regression checklist in this doc re-run after any sync/order fix
-- [ ] Recommended testing suite **step 8 (Lifecycle / resume)** PASS once Step 11 ships
+- [ ] Recommended testing suite **row 8 (Lifecycle / resume)** PASS once **Build Step 11** (lifecycle re-entry) ships
 - [ ] Final decision: `GO wider beta` / `NO-GO`
 
 ### Recommended testing suite: hashed `#state=` in Messages
@@ -548,7 +575,7 @@ Use this as the pre-beta evidence log. Fill date/owner/device details as you exe
 | **5. Couple loop integrity** | Run **Regression checklist (request/award sync integrity)**. | No premature scores on requester; award lands on resolver first; pass stays silent. |
 | **6. Malformed packets** | Truncate `#state=`, flip `v`, drop `scores.a`, inject `NaN` — paste into hash navigation on a throwaway tab. | Apply rejects packet; prior good `localStorage` state unchanged (week-12 hardening spot-check; see `ROADMAP-12w.md`). |
 | **7. Ledger vs totals** | Classify reports using `SPEC.md` *Field note* + *Post–v2 launch field report* here: link-only vs local-action bug. | Bug tickets include **devices, build, steps, and decoded packet**. |
-| **8. Lifecycle / resume** | Step 11 patch plan: backgrounded app or bfcached tab; tap link from Messages or use Back after forward navigation. | `#state=` applies when expected; if hash absent after OS handoff, rehydrated UI still matches `localStorage` scores/pending; no duplicate stale rollback vs `lastAppliedPacketTs`. |
+| **8. Lifecycle / resume** | **Build Step 11:** backgrounded app or bfcached tab; tap link from Messages or use Back after forward navigation. | `#state=` applies when expected; if hash absent after OS handoff, rehydrated UI still matches `localStorage` scores/pending; no duplicate stale rollback vs `lastAppliedPacketTs`. |
 
 Subsections below (**Decode packet quickly**, **Pre-beta blocker execution plan**, **Regression checklist**) are the **executable** parts of this suite; the execution checklist template is the **audit log**.
 
@@ -590,7 +617,7 @@ If the answer trends toward "just the app more," quietly panic and adjust before
 
 ### Regression checklist (request/award sync integrity)
 
-Run after any change to request, award, `#state=` sync, pending resolution, or **Step 11 lifecycle resume** listeners:
+Run after any change to request, award, `#state=` sync, pending resolution, or **Build Step 11** (lifecycle resume) listeners:
 
 - [ ] **Request send creates pending only:** sender sends request; sender UI shows request sent state but **not** awarded state.
 - [ ] **Receiver sees pending request:** receiver opens incoming link and sees pending request ready for Award/Pass.

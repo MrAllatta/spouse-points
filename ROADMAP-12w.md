@@ -44,7 +44,7 @@
 
 **Regression checklist requirement:** before wider beta sharing, run the request/award sync integrity checklist in `BUILD-v2.md` after any sync-flow changes. Treat failures as blockers, not polish.
 
-**Status (2026-04-14):** forced names + no visible A/B language + copy/vocabulary pass + desktop copy-first handoff are implemented in `index.html`; the multi-select awards toggle is implemented and currently initializes on for fresh local state; exhausted-parent gate test remains required before wider beta sharing.
+**Status (2026-04-14):** forced names + no visible A/B language + copy/vocabulary pass + desktop copy-first handoff are implemented in `index.html`; the multi-select awards toggle is implemented and currently initializes on for fresh local state; **exhausted-parent gate test passed** — app launched, opened, message sent without the “what am I supposed to do?” moment; tester was **not fully cold** (some prior context), but the pass condition was met. Wider beta remains gated on other items (e.g. burst-send / sync matrix in *Immediate pre-beta blocker plan*).
 
 **Latest spouse-test input (2026-04-14):** first question was whether multiple items can be clicked in one award action. Treat this as a strong signal to evaluate a multi-select award option after the pre-beta clarity gate; feasibility is medium-high with current category/points model, but must be tested against "quick notice" simplicity.
 
