@@ -35,6 +35,7 @@
 | 8 | Settings panel (names + point overrides) | Shipped |
 | 9 | Category CRUD in Settings | Shipped |
 | 10 | PWA (installable) | Shipped |
+| 11 | Lifecycle re-entry for `#state=` (Messages / resume / bfcache) | Planned |
 
 ---
 
@@ -113,6 +114,34 @@ function checkHashState() {
 `applyPacket` returns **`true`** when the packet was applied, **`false`** when ignored (bad version / shape). `maybeShowSyncOnboardingToast` runs only on success: prompts **Settings** if local names are still placeholders or empty, or if packet `names` cannot be reconciled with local You/Spouse strings (see `SPEC.md` *Onboarding toast after a link*). Production copy lives in `index.html` (`showInfoToast`, `.toast-onboarding`).
 
 **Done when:** generating a URL, opening it in a second browser tab, and seeing the correct scores and pending state load; with default names still in place, an onboarding-style toast appears once per link open until names are set.
+
+### Patch plan — lifecycle re-entry for `#state=` (Messages / PWA)
+
+**Problem:** `SPEC.md` field note (2026-04-14) — after a partner sends a sync URL in Messages, the recipient can land on a **foreground app** whose **scoreboard still shows old totals** until a manual full refresh.
+
+**Cause (current `index.html`):** `checkHashState()` is invoked from `init()` **once** at first script run. Mobile reuse of an existing tab or standalone shell, return from Messages without a cold navigation, or **bfcache** (`pageshow` with `event.persisted`) can skip that boot path even when `#state=` is present or `localStorage` already reflects a merged packet.
+
+**Goal:** Re-run the same **idempotent** apply / render path whenever the document becomes relevant again — **without** `location.reload()` as the default behavior.
+
+**Implementation outline (single-file constraint):**
+
+1. **One resume entrypoint** — e.g. `resumeSyncFromNavigation()` that:
+   - If `location.hash` starts with `#state=`, run the same logic as today’s `checkHashState()` (decode → `applyPacket` → `maybeShowSyncOnboardingToast` on success → strip hash via `history.replaceState`).
+   - If there is **no** `#state=` on this activation, optionally **rehydrate scores + pending from `localStorage`** and refresh their DOM (`score-a` / `score-b`, `renderPending()`), so a merge that happened while the page was frozen still paints. Prefer a **narrow** helper over duplicating all of `loadState()` unless audit shows `loadState()` is safe to call on every `visibilitychange` (watch for fighting in-flight Settings edits, micro-moment state, and double DOM work).
+2. **Subscribe once after `init()` baseline:**
+   - `window.addEventListener("pageshow", (ev) => { if (ev.persisted) resumeSyncFromNavigation(); })` for **bfcache** restores.
+   - `window.addEventListener("hashchange", resumeSyncFromNavigation)` for fragment updates without a full load.
+   - `document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") resumeSyncFromNavigation(); })` for return from Messages / app switcher. If `pageshow` + `visibilitychange` double-fire, rely on idempotency: second call should no-op once hash is cleared / `applyPacket` returns false for stale `ts`.
+3. **Do not weaken** `lastAppliedPacketTs` stale guard inside `applyPacket`. Keep onboarding toast tied to **`applyPacket` returned `true`** on that invocation so duplicate events do not stack toasts.
+4. **Optional short-lived logging** (commented or behind a throwaway flag) while validating iOS standalone vs Safari; remove before calling the patch done.
+
+**QA / done when:**
+
+- **iOS matrix:** Safari tab **and** Home Screen standalone — app **already in background**, tap new incoming link in Messages → scores + pending match a **decoded** packet within ~1s of foreground **without** manual refresh.
+- **Desktop Chrome:** navigate away and **Back** to a bfcached document → UI still matches storage after resume.
+- **Regression:** cold `init()` path unchanged; burst / **newest-`ts`-wins** tests in this doc still pass.
+
+**Related spec:** `SPEC.md` *Field note (2026-04-14): stale scoreboard after link from Messages*.
 
 ---
 
@@ -348,6 +377,7 @@ if ("serviceWorker" in navigator) {
 
 - [x] Award points → Messages opens with sync link on mobile; SMS body has what was noticed + link, **no quip** *(implemented; confirm on device)*
 - [x] Partner taps link → correct scores and pending load → hash clears; local ledger unchanged; local Settings names unchanged; **onboarding toast** when names still default or don’t match packet *(implemented; confirm on device)*
+- [ ] **Lifecycle re-entry (Step 11):** with PWA or tab **already open**, return from Messages via incoming `#state=` link → scores/pending update **without** manual refresh; bfcache back-navigation still correct *(see Patch plan under Step 2)*
 - [x] Request points → Messages opens with request text and link *(implemented; confirm on device)*
 - [x] Partner taps link → pending request surfaces → Award it → **return** Messages opens with updated sync link (celebration leg) *(implemented; confirm on device)*
 - [x] Pass a request → no message sent, request disappears, no ledger entry *(implemented; confirm on device)*
@@ -416,6 +446,12 @@ If any box fails, treat it as a blocker and fix copy/flow before expanding the t
 - **Next tests (pick the branch that matches what actually happened):**
   - **A — Link-only receiver:** If the only action was “open partner’s `#state=` link,” decide whether the gap is **expected by design** vs a **UX / copy** problem (people assume the ledger mirrors the thread). Capture whether `pending` looked correct when totals moved.
   - **B — Local action bug:** If the receiver (or sender) performed an **award / resolve** that should have called the normal `history` write path **on that same device** and the ledger still failed to update while totals changed, treat as a **defect candidate**: file repro with devices, OS/browser, build/commit, screenshots, and decoded packet (`scores`, `pending`, `ts`).
+
+### Post–v2 launch field report — stale scoreboard until manual refresh (2026-04-14)
+
+- **Reported experience:** URLs exchanged in Messages; opening a link does not always force a cold load; **points stay invisible or wrong on screen** until the user manually refreshes.
+- **Classification:** Treat as **client lifecycle / navigation** (init-only `#state=` handling), not “bad packet,” when a full refresh fixes the UI. Capture whether `#state=` was still in the address bar when broken.
+- **Planned fix:** **Step 11** in the progress table — implementation steps and QA matrix live under **Patch plan — lifecycle re-entry for `#state=`** immediately after Step 2 in this file; product framing in `SPEC.md` *Field note (2026-04-14): stale scoreboard after link from Messages*.
 
 ### Pre-beta blocker execution plan (2026-04-14)
 
@@ -494,6 +530,7 @@ Use this as the pre-beta evidence log. Fill date/owner/device details as you exe
 - [ ] A1–A4 all PASS (or PASS after documented fix/rerun)
 - [ ] Multi-select decision documented with evidence
 - [ ] Regression checklist in this doc re-run after any sync/order fix
+- [ ] Recommended testing suite **step 8 (Lifecycle / resume)** PASS once Step 11 ships
 - [ ] Final decision: `GO wider beta` / `NO-GO`
 
 ### Recommended testing suite: hashed `#state=` in Messages
@@ -511,6 +548,7 @@ Use this as the pre-beta evidence log. Fill date/owner/device details as you exe
 | **5. Couple loop integrity** | Run **Regression checklist (request/award sync integrity)**. | No premature scores on requester; award lands on resolver first; pass stays silent. |
 | **6. Malformed packets** | Truncate `#state=`, flip `v`, drop `scores.a`, inject `NaN` — paste into hash navigation on a throwaway tab. | Apply rejects packet; prior good `localStorage` state unchanged (week-12 hardening spot-check; see `ROADMAP-12w.md`). |
 | **7. Ledger vs totals** | Classify reports using `SPEC.md` *Field note* + *Post–v2 launch field report* here: link-only vs local-action bug. | Bug tickets include **devices, build, steps, and decoded packet**. |
+| **8. Lifecycle / resume** | Step 11 patch plan: backgrounded app or bfcached tab; tap link from Messages or use Back after forward navigation. | `#state=` applies when expected; if hash absent after OS handoff, rehydrated UI still matches `localStorage` scores/pending; no duplicate stale rollback vs `lastAppliedPacketTs`. |
 
 Subsections below (**Decode packet quickly**, **Pre-beta blocker execution plan**, **Regression checklist**) are the **executable** parts of this suite; the execution checklist template is the **audit log**.
 
@@ -552,7 +590,7 @@ If the answer trends toward "just the app more," quietly panic and adjust before
 
 ### Regression checklist (request/award sync integrity)
 
-Run after any change to request, award, `#state=` sync, or pending resolution:
+Run after any change to request, award, `#state=` sync, pending resolution, or **Step 11 lifecycle resume** listeners:
 
 - [ ] **Request send creates pending only:** sender sends request; sender UI shows request sent state but **not** awarded state.
 - [ ] **Receiver sees pending request:** receiver opens incoming link and sees pending request ready for Award/Pass.
@@ -563,6 +601,44 @@ Run after any change to request, award, `#state=` sync, or pending resolution:
 - [ ] **Direct award flow still works:** non-request award still sends/loads correctly and does not regress from this fix.
 
 Any failure is a release blocker for pre-beta expansion.
+
+---
+
+## Staged backlog — mobile category grid (two columns)
+
+**Captured:** 2026-04-14. **Intent:** ship after pre-beta P0 blockers unless this is picked up as a trivial CSS-only win in a polish pass.
+
+### Problem
+
+Award and request flows render category chips in `.category-grid` inside `index.html`. The default layout is **two columns** (`grid-template-columns: 1fr 1fr`). Inside `@media (max-width: 480px)` the same stylesheet forces **one column** (`grid-template-columns: 1fr`).
+
+Typical phone **CSS viewport widths** often sit between ~360px and ~430px, which is **below 480px**, so **most mobile sessions always see a single column** — not because the content measured overflow, but because of the breakpoint.
+
+Product-wise, that wastes horizontal space: two modest columns with the current gaps and button padding often still fit, so the grid can feel unnecessarily tall and scroll-heavy compared to desktop.
+
+### Current code anchor
+
+- **Default grid:** `.category-grid { display: grid; grid-template-columns: 1fr 1fr; … }`
+- **Mobile override:** `@media (max-width: 480px) { … .category-grid { grid-template-columns: 1fr; } }`
+
+### Staged recommendation
+
+**Stage 1 — Validate and choose a minimal CSS change (preferred first step)**
+
+- On real devices (or responsive mode at iPhone SE / small Android width), **temporarily remove** the `.category-grid` single-column override *or* **lower** the breakpoint so only very narrow viewports collapse (e.g. try `max-width: 360px` or `340px` instead of `480px`).
+- **Acceptance:** no horizontal scroll on the award card; category labels remain readable; tap targets still feel comfortable with the longest plausible custom category name from Settings.
+- **If** long labels wrap awkwardly at two columns, prefer tightening typography or grid gap slightly *before* giving up on two columns.
+
+**Stage 2 — Layout that tracks “enough width” instead of a single magic number**
+
+- If a fixed breakpoint stays flaky across devices and user-defined label lengths, switch to a **content-driven grid**, for example `repeat(auto-fit, minmax(<min-track>, 1fr))` so the browser chooses one vs two columns from available width. Tune `<min-track>` against the real minimum comfortable chip width (include emoji + padding).
+- Use `minmax(0, 1fr)` (or equivalent overflow discipline) so long words in custom categories do not blow out the grid.
+
+**Stage 3 — QA pass**
+
+- Re-check award mode and request mode (same grid), multi-select on/off, and settings with **many** categories and **long** labels on iOS Safari and Android Chrome.
+
+**Non-goals for this item:** changing category data model, SMS copy, or sync behavior — layout only.
 
 ---
 

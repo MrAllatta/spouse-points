@@ -52,6 +52,8 @@
 
 **Latest planning question (2026-04-14):** validate burst-send sync semantics: if multiple awards and then a request are sent before partner opens any message, the newest link should include sender-current state so receiver can open only the latest message and still land fully up to date.
 
+**Staged UI polish (2026-04-14):** mobile category buttons currently **collapse to one column** at `max-width: 480px` even when two columns would still fit — see `BUILD-v2.md` section *Staged backlog — mobile category grid (two columns)* for problem statement, code anchor in `index.html`, and a three-stage fix (breakpoint / `auto-fit` grid / device QA). Treat as **post–P0 sync work** unless pulled in as a small CSS-only polish.
+
 ### Immediate pre-beta blocker plan (must complete before wider tester pool)
 
 - **Blocker 1 (P0 sync integrity):** run a burst-send matrix on real phones and prove newest-link-wins behavior for award-only and mixed award+request bursts.

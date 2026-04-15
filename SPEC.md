@@ -112,6 +112,9 @@ The requester reads the silence. That's appropriate.
 **On self-award:** trying to award yourself requires texting yourself. The mechanic makes this immediately absurd and self-defeating. No explicit rule needed — the flow enforces it.
 
 ### 3. The Ledger
+
+**What it records:** The ledger is **a record of what you noticed**, not **what you were noticed for**. That framing is intentional: it archives *your* attention and the gestures *you* chose to name (outbound awards, and — where the flow applies — how you resolved things on your side), not a mirrored, neutral transcript of every moment your partner credited you. If someone expects a symmetric “everything said about me” log, the ledger will look incomplete — it is not broken; it was never meant to be that artifact.
+
 Running history of all activity. Two entry types in the URL model:
 - Spontaneous award (no tag)
 - Requested + awarded (`requested`)
@@ -221,6 +224,14 @@ The `#` (fragment) is never sent to the server. GitHub Pages serves the HTML; it
 History stays on-device and is never transmitted. It's a private local archive.
 
 **Field note (2026-04-14, post–v2 launch):** One real usage report: after opening a partner’s link, **totals updated** but the **on-device ledger** did not gain rows that “explain” the partner-side activity. Before treating that as a code bug, classify it against the paragraph above: `#state=` applies **scores + pending**, not `history`, so **link-only apply can change totals without new ledger lines**. If the discomfort is “I expected my ledger to mirror what they did,” that is primarily a **product / expectations** question (copy, empty state, education, or a future policy change), not necessarily a sync defect. If the report is instead “I awarded or resolved something on **this** phone and **history stayed empty while totals moved**,” capture a step-by-step repro (devices, build, decoded packet) and treat that as a true defect candidate.
+
+**Field note (2026-04-14): stale scoreboard after link from Messages (no full refresh).** Real usage: partners exchange URLs in the text thread; opening a link does **not** reliably behave like a cold navigation. The app surface can come to the foreground while the **scoreboard still shows old totals** until the user forces a full refresh. **Working hypothesis:** sync apply today is wired to **first-load** initialization (parse `#state=` once when the script boots). Mobile OS behavior often **reuses** an existing tab, standalone PWA shell, or **back/forward cache** so the document **does not** re-run that boot path when returning from Messages or when the platform hands the same webview a new URL fragment. The underlying `localStorage` merge may never run, or the in-memory DOM may not be reconciled with storage after resume — both read as “points not visible until refresh.” **Improvement directions (implementation, not committed):**
+- **Lifecycle re-entry:** On `pageshow` (especially `event.persisted === true` after bfcache), on `visibilitychange` to `visible`, and/or on `hashchange`, call a single **idempotent** routine: if `location.hash` still carries `#state=`, decode → apply packet → strip hash; otherwise **re-read persisted state** and **re-render** scores and pending so any apply that landed while the page was frozen is visible.
+- **PWA / iOS quirk isolation:** Repro matrix should include **Add to Home Screen** standalone vs Safari tab, and “app already open in background” vs “cold start from tap,” to see which path skips `init()`.
+- **UX safety net:** A lightweight “Updated from your thread” toast after a successful apply (already partially in the onboarding toast path) plus an optional **pull-to-refresh** or explicit **Refresh scores** control is a last-resort affordance if platforms keep surprising us.
+- **Avoid blind `location.reload()`** as the primary fix — it costs trust, bandwidth, and offline behavior — but it remains a diagnostic comparison when classifying reports.
+
+**Classification tip:** If a **forced refresh** fixes totals, treat as **resume / navigation lifecycle** (client boot assumptions), not as “SMS sent the wrong packet.” Capture whether the address bar still showed `#state=` after the bad render; if yes, the packet likely never applied on that activation.
 
 **What stays out of the sync packet (on purpose):** Per-device **settings** — custom **point overrides**, the **editable category catalog** (emoji / label / order / user-added rows), and any future decay toggles. Same rationale as overrides: keeps URLs small, avoids packet version churn, and allows each partner to keep a personal grid if they want. **Cross-partner legibility** still works because pending items carry a human-readable **`label`** (and a stable `category` key for scoring on the resolver’s device); if the resolver has never seen that key, scoring falls back to defaults and quips fall back to the generic **custom** pool until they add a matching row locally.
 
@@ -375,6 +386,7 @@ The `index.html` prototype is a functional proof of concept for:
 What it does not yet capture:
 - Decay (read-time half-life model is spec’d only)
 - Broader **device QA** (more phones, offline edge cases, bad `#state=` payloads — see `ROADMAP-12w.md` week 12, `SPEC.md` *Recommended testing suite (investigating hashed `#state=` in Messages)*, and `BUILD-v2.md` *Recommended testing suite: hashed `#state=` in Messages*)
+- **Mobile category grid density:** CSS forces the category button grid to **one column** below 480px viewport width even when two columns would often still fit; staged layout options and acceptance tests live in `BUILD-v2.md` (*Staged backlog — mobile category grid (two columns)*), with a roadmap pointer in `ROADMAP-12w.md`
 
 The mock is the right fidelity for now. It's enough to show someone and have a real conversation about whether it works.
 
