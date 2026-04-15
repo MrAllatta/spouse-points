@@ -35,6 +35,7 @@
 | 8 | Settings panel (names + point overrides) | Shipped |
 | 9 | Category CRUD in Settings | Shipped |
 | 10 | PWA (installable) | Shipped |
+| 11 | Desktop handoff: toast lifecycle after Copy | Logged — see Step 11 below |
 
 ---
 
@@ -344,6 +345,23 @@ if ("serviceWorker" in navigator) {
 
 ---
 
+### Step 11 — Desktop handoff: toast lifecycle after Copy
+
+**Field report:** On desktop, after an award or request, `#desktop-handoff` shows with **Copy Message**; copying works. The **`#toast`** banner often **still draws attention afterward** — the “Copied” info state can feel slow or the earlier celebration/request toast and copy feedback **overlap in time** because two different timer mechanisms drive the same DOM node.
+
+**Root cause (current `index.html`):** `showToast()` and `showRequestToastThenHandoff()` each fire `setTimeout(() => toast.classList.remove("show"), 3500)` **without saving the handle** or clearing it when the flow changes. `copyDesktopHandoffMessage()` calls `showInfoToast(...)`, which only manages `infoToastTimer`. The celebration/request dismiss timer and the info-toast timer **do not coordinate**, so `.show` / content transitions are order-dependent and easy to misread as a bug.
+
+**Direction (pick one coherent approach — can combine):**
+
+1. **Single dismiss pipeline:** Introduce something like `toastDismissTimer` (or reuse one module) for *any* auto-hide of `#toast`. Clear it whenever showing a new toast (`showToast`, `showInfoToast`, copy success/failure, opening handoff).
+2. **Clear celebration timer on copy:** In `copyDesktopHandoffMessage()` after a successful write, `clearTimeout` the same handle `showToast` / request handoff registered (requires those paths to assign `toastDismissTimer = setTimeout(...)` and export clearing via a small `clearAutoToastDismiss()` helper).
+3. **Reduce redundancy on desktop:** When `showDesktopHandoff()` runs, immediately **hide the floating toast** (`hideInfoToast()` + remove `.show` + clear any pending celebration dismiss) so the only surface is the handoff card; use **button label** or a brief inline “Copied” on the copy control instead of a second global toast.
+4. **Always cancel on transition:** Any code path that replaces toast content must cancel **all** pending hide timers that target `#toast`.
+
+**Done when:** On desktop, after **Copy Message** succeeds, the user does not perceive a **lingering or competing** `#toast` state (manual QA: award → copy within 1s, at ~3s after award, and after waiting for celebration to almost expire). Request flow gets the same treatment. No orphaned `setTimeout` still firing after a newer toast state has taken over.
+
+---
+
 ## Testing Checklist
 
 - [x] Award points → Messages opens with sync link on mobile; SMS body has what was noticed + link, **no quip** *(implemented; confirm on device)*
@@ -358,7 +376,8 @@ if ("serviceWorker" in navigator) {
 - [x] New category uses correct points; unknown key on partner device resolves with fallback quips *(Step 9)*
 - [x] Single-owner flow: no partner switcher; awards to B, requests from A; link apply swaps A/B when sender/receiver slotting differs *(see `SPEC.md`)*
 - [x] No in-app reset to wipe scores/ledger (verify absent in Settings); fresh start only via OS / private window / clear site data*
-- [x] Desktop: SMS handoff degrades gracefully (shows URL in toast) *(implemented; confirm on device)*
+- [x] Desktop: SMS handoff degrades gracefully (handoff panel + toast; URL is in the copied body) *(implemented; confirm on device)*
+- [ ] Desktop: after **Copy Message**, `#toast` does not feel stuck or double-driven *(BUILD-v2 Step 11; coordinate celebration dismiss vs `infoToastTimer`; manual QA)*
 - [x] PWA: installs to home screen on iOS and Android *(Step 10; confirm on device)*
 - [x] Offline: app loads after install with no network *(Step 10; confirm on device)*
 

@@ -367,7 +367,7 @@ The `index.html` prototype is a functional proof of concept for:
 - **Settings** slide-up (header gear): you/spouse names, **category CRUD** (reorder / edit / add / delete with pending guard), per-category point inputs, backdrop / Done / Escape to close; names are **in** the `#state=` packet for SMS + orientation; **local** name fields stay yours; overrides stay on-device
 - **Multi-select awards toggle (beta):** optional Settings switch for selecting multiple categories in one award action; grouped awards sum selected category points, then apply multiplier, and send one ledger/SMS line
 - URL-as-state sync packet (`#state=` hash, base64 JSON) with load-time apply, **A/B swap when the sender’s “who is A” differs from this phone**, **onboarding toast** after link open when names are still placeholders or don’t match the packet, and hash strip
-- Messages (`sms:`) handoff after spontaneous award, after request, and after awarding a pending request (with desktop URL-in-toast fallback); pre-filled SMS follows *Core Mechanics* (points, recipient, what was noticed, link — quip stays in-app)
+- Messages (`sms:`) handoff after spontaneous award, after request, and after awarding a pending request (on **desktop**: `#desktop-handoff` + **Copy Message** + `#toast` celebration; toast/copy timing polish is **BUILD-v2.md** Step 11); pre-filled SMS follows *Core Mechanics* (points, recipient, what was noticed, link — quip stays in-app)
 - **iOS Safari (in-browser):** one-time toast after a mobile Messages handoff (and a delayed fallback) nudging **Share → scroll if Add to Home Screen is off-screen → Add to Home Screen**; dismissal stored in the same localStorage blob as other client flags
 - Pass dismiss with **no** ledger row (**“Not this one”**), matching the URL model
 - The emotional tone of the quip writing
@@ -383,6 +383,12 @@ The mock is the right fidelity for now. It's enough to show someone and have a r
 ## Beta feedback log
 
 Entries are **internal QA notes** (relationship disclosed where it affects tone). Back up claims with **screenshots** in your own archive; this file only summarizes.
+
+### 2026-04-14 — desktop Messages handoff + Copy (possible bug)
+
+- **Field report (non-mobile):** After an award or request, the **desktop handoff** panel appears with pre-filled text and a **Copy Message** control; that part reads correctly. After a successful copy, the **floating `#toast`** (`.result-toast`) **remains on screen** for a stretch — either the “Copied” confirmation feels like it lingers, or the earlier celebration/request toast and the copy feedback **stack awkwardly** in time. Expectation from the session: once the message is copied, the chrome should get out of the way faster (or a single clear success state), not a toast that still occupies attention.
+- **Likely cause (implementation):** In `index.html`, `showToast()` and the inline path in `showRequestToastThenHandoff()` schedule `setTimeout(() => toast.classList.remove("show"), 3500)` **without retaining or clearing** that timer. `copyDesktopHandoffMessage()` then calls `showInfoToast(...)`, which uses a **separate** `infoToastTimer`. The two systems do not cancel each other, so dismiss timing is tied to **two independent clocks** (award/request start vs. copy confirmation), which is brittle and can read as “stuck” or redundant beside the handoff card.
+- **Planned fix / polish:** See `BUILD-v2.md` **Step 11 — Desktop handoff: toast lifecycle after Copy** (single coordinated timer, clear celebration dismiss on copy or when handoff opens, and/or inline feedback on the button instead of a second toast).
 
 ### 2026-04 — first beta session (sister)
 
