@@ -90,6 +90,7 @@ One partner notices something the other did and awards points for it. Spontaneou
 
 - **Recipient on this device:** always **Partner B** — your spouse. **Partner A** is *you* on the phone where the app is installed. There is **no in-app “which partner am I?” toggle**; the install is owned by one person, you both keep a scoreboard, and every outbound award is “I noticed you.” Names for A and B are set in Settings on each phone (each partner’s install should name themselves as A and the other as B).
 - Category selected from the **grid on this device** — seeded from the same default caricature list for everyone, then **editable in Settings** (add / rename / reorder / delete rows; see `BUILD-v2.md` Step 9, shipped in `index.html`). **Per-category point values** are editable in Settings. Freeform detail remains available via the custom line + category choice.
+- **Custom-first rule (staged decision):** in the award composer, the custom text entry should be visually first (above presets), and when custom text is used it must include a **per-entry custom points value** at send time. A single global "custom default points" setting can remain as fallback but should not replace choosing points for each custom notice.
 - Points awarded: fixed value per category (with optional local overrides), sensible defaults — not randomized
 - A quip surfaces on award — dry, specific, not generic
 - **Completes by opening Messages** with a pre-composed text and sync link — there are no private awards. Awarding points without telling your partner is keeping a diary. The mechanic doesn't allow it. The draft text leads with points, recipient, and **what was noticed** (category and optional detail), then the sync link — not the quip.
@@ -132,6 +133,7 @@ The ratio of spontaneous to requested awards over time is the real signal.
 **Candidate mitigations (not mutually exclusive):**
 
 - **Rename in UI copy** — e.g. **“Ledger of noticings”** (or similar): keeps “ledger” if we want the familiar weight of a durable log, but forces the right genus: entries are *noticings*, not a neutral balance sheet of self.
+- **Name the direction explicitly** — preferred heading language: **“Ledger of What You Noticed”** (or close variant) so users do not default to the "what I received" interpretation.
 - **Two-way ledger (optional product direction)** — a mode or tab that makes **both partners’ outbound noticings** legible in one place, without pretending the per-install ledger is already that artifact. This addresses the “incomplete” feeling without smuggling in a courtroom transcript; it still rewards the core mechanic (naming what you saw) rather than reframing the whole product as “what I got.”
 - **Reframe as “received” (rejected as default)** — lean into the natural ledger metaphor (*what I have*) for instant comprehension. We are **not** pursuing that as the primary frame, because **noticing as the moral center** is the thesis; optimizing for “my haul” would run with the grain of scorekeeping and against the grain of the mirror we want.
 

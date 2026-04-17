@@ -494,7 +494,7 @@ If any box fails, treat it as a blocker and fix copy/flow before expanding the t
 - **Next tests (pick the branch that matches what actually happened):**
   - **A — Link-only receiver:** If the only action was “open partner’s `#state=` link,” decide whether the gap is **expected by design** vs a **UX / copy** problem (people assume the ledger mirrors the thread). Capture whether `pending` looked correct when totals moved.
   - **B — Local action bug:** If the receiver (or sender) performed an **award / resolve** that should have called the normal `history` write path **on that same device** and the ledger still failed to update while totals changed, treat as a **defect candidate**: file repro with devices, OS/browser, build/commit, screenshots, and decoded packet (`scores`, `pending`, `ts`).
-- **Terminology clarity note (added 2026-04-15):** The ledger framing is still easy to misread. Product intent is that it is a **ledger of what you noticed about your partner**, not a log of what they noticed about you. Treat this as a subtle but correct model shift, and at minimum update UI/copy references to explicitly say **"ledger of what you noticed"** to reduce confusion.
+- **Terminology clarity note (added 2026-04-15; tightened 2026-04-17):** The ledger framing is still easy to misread. Product intent is that it is a **ledger of what you noticed about your partner**, not a log of what they noticed about you. Treat this as a subtle but correct model shift, and update UI copy to an explicit heading such as **"Ledger of What You Noticed"** (or equivalent plain-language variant) to reduce confusion.
 
 ### Post–v2 launch field report — stale scoreboard until manual refresh (2026-04-14)
 
@@ -691,36 +691,38 @@ Product-wise, that wastes horizontal space: two modest columns with the current 
 
 ---
 
-## Staged design decision — custom points placement + quip model
+## Staged design decision — custom-first entry + per-entry points + ledger clarity
 
 **Captured:** 2026-04-15. **Intent:** stage for future implementation in both v1 and v2 UI surfaces.
 
 ### Decision
 
-- **Custom points should be surfaced at the top** of the points controls (higher visual priority than today).
-- The current behavior puts the custom field at the bottom in both v1 and v2; this stays as-is until the staged change is implemented.
-- Revisit quip usage in the award flow: **presets can remain**, but self-facing quips on local ledger actions should be deprioritized or removed.
+- **Custom text entry should sit above presets** in the award UI so "what I noticed in my own words" is the default mental path.
+- **Each custom notice must include its own points field at entry time.** This is per custom submission (not one global "custom category default").
+- Existing per-category/default custom point settings can remain as fallback scaffolding, but they do **not** replace the per-entry custom points input.
+- Ledger heading/copy should explicitly communicate directionality: **what you noticed**, not **what was noticed about you**.
 
 ### Why this changed
 
-- Earlier versions prioritized presets and funny quips first.
-- Product reality: this is a **text messaging tool** that creates structure around sending your spouse a message like "I noticed."
-- The core expectation is that users write their own message because they should; defaults are helpers, not the main event.
-- Quips are funniest when **received by your partner** in context. A quip shown to yourself while logging your own local award/ledger action usually does not add meaning.
+- Earlier versions over-optimized preset speed; that unintentionally teaches "tap a canned category" instead of "name what I actually noticed."
+- Product reality: this is a **text-message noticing loop**, so handwritten noticing should be visually and interactionally first-class.
+- A single global custom default points value is too coarse: custom notices vary in weight, and users need to choose the magnitude each time.
+- Current "Ledger" wording imports money/credits mental models ("what I received"), which conflicts with the intended behavior shift toward practicing outbound noticing.
 
 ### Staged implementation direction
 
-- Move custom points input/control to the top of the relevant points UI in both v1 and v2.
-- Keep default presets available, but treat them as optional accelerators.
-- Use the selected quip as the **default outbound message text** when sending an award (editable before send), since that is the partner-facing moment.
-- Do not use quip copy as local ledger text; ledger entries should remain plain "what you noticed" records.
-- Update any related helper copy to reinforce the "notice + send" behavior over "pick a funny line for yourself."
+- Move custom text entry to the top of the award section (above category grid / preset chips).
+- Add a dedicated **custom points** number input directly adjacent to custom text (same interaction block), required when custom text is used.
+- Keep preset categories as optional accelerators below custom entry; selecting a preset can still auto-resolve points from `pointsForKey`.
+- Validation rule: custom notice submission requires non-empty text **and** a valid finite points value (integer policy can match existing points controls).
+- SMS + ledger copy for custom submissions should use the explicit custom text and selected custom points.
+- Rename ledger heading/copy to **"Ledger of What You Noticed"** (or a nearby variant) and align empty-state helper text with the same frame.
 
 ### Non-goals for this staged item
 
 - No immediate refactor of sync packet shape.
-- No change to score math or pending-request semantics.
-- No change to category CRUD model.
+- No change to request/pending semantics.
+- No change to category CRUD model beyond preserving compatibility with existing point defaults.
 
 ---
 
