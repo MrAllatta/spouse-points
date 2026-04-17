@@ -915,7 +915,7 @@
       line-height: 1.3;
     }
 
-    @media (max-width: 480px) {
+    @media (max-width: 360px) {
       header h1 { font-size: 1.8rem; }
       .scoreboard { gap: 1rem; }
       .score-card .points { font-size: 2.2rem; }
@@ -979,7 +979,7 @@
   </div>
 
   <div class="history">
-    <h3>The Ledger</h3>
+    <h3>Ledger of Noticings</h3>
     <div id="history-list">
       <div class="history-empty">No notices yet. Start with one thing your spouse did.</div>
     </div>
@@ -1199,6 +1199,7 @@
       iosAddToHomeHintShown: false,
     };
     let infoToastTimer = null;
+    let toastDismissTimer = null;
     let iosAddToHomeHandoffHooked = false;
     let iosAddToHomeFallbackTimer = null;
 
@@ -1410,11 +1411,46 @@
 
       maybeScheduleIosAddToHomeHintFallback();
 
+      window.addEventListener("pageshow", (ev) => {
+        if (ev.persisted) resumeSyncFromNavigation();
+      });
+      window.addEventListener("hashchange", resumeSyncFromNavigation);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") resumeSyncFromNavigation();
+      });
+
       document.addEventListener("keydown", (e) => {
         if (e.key !== "Escape") return;
         const panel = document.getElementById("settings-panel");
         if (panel && panel.classList.contains("open")) closeSettings();
       });
+    }
+
+    function syncRenderedScoresAndPendingFromState() {
+      document.getElementById("score-a").textContent = state.scores.a;
+      document.getElementById("score-b").textContent = state.scores.b;
+      renderPending();
+    }
+
+    function resumeSyncFromNavigation() {
+      if (location.hash.startsWith("#state=")) {
+        checkHashState();
+        return;
+      }
+      try {
+        const raw = localStorage.getItem("spouse-points");
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        const scores = data?.scores;
+        const pending = data?.pending;
+        if (scores && Number.isFinite(scores.a) && Number.isFinite(scores.b)) {
+          state.scores = scores;
+        }
+        if (Array.isArray(pending)) {
+          state.pending = pending;
+        }
+        syncRenderedScoresAndPendingFromState();
+      } catch (e) {}
     }
 
     function onCustomPointChange(el) {
@@ -1786,17 +1822,25 @@
       setMultiplier(1);
     }
 
+    function clearToastDismissTimer() {
+      if (!toastDismissTimer) return;
+      clearTimeout(toastDismissTimer);
+      toastDismissTimer = null;
+    }
+
     function showToast(points, quip, name) {
       const toast = document.getElementById("toast");
+      clearToastDismissTimer();
       document.getElementById("toast-points").textContent = `${name} got +${points}`;
       document.getElementById("toast-quip").textContent = quip;
       toast.classList.remove("toast-onboarding");
       toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 3500);
+      toastDismissTimer = setTimeout(() => toast.classList.remove("show"), 3500);
     }
 
     function hideInfoToast() {
       const toast = document.getElementById("toast");
+      clearToastDismissTimer();
       if (infoToastTimer) {
         clearTimeout(infoToastTimer);
         infoToastTimer = null;
@@ -1807,6 +1851,7 @@
 
     function showInfoToast(title, body, ms) {
       const toast = document.getElementById("toast");
+      clearToastDismissTimer();
       document.getElementById("toast-points").textContent = title;
       document.getElementById("toast-quip").textContent = body;
       if (infoToastTimer) {
@@ -1913,6 +1958,8 @@
       const title = document.getElementById("desktop-handoff-title");
       const body = document.getElementById("desktop-handoff-body");
       if (!box || !title || !body) return;
+      // On desktop keep one clear surface: handoff card, not competing toast.
+      hideInfoToast();
       title.textContent = `Copy this and send it to ${partnerName || "your spouse"}`;
       body.value = message;
       box.classList.add("show");
@@ -1946,11 +1993,12 @@
 
     function showRequestToastThenHandoff(requesterName, label) {
       const toast = document.getElementById("toast");
+      clearToastDismissTimer();
       document.getElementById("toast-points").textContent = `${requesterName} asked for notice`;
       document.getElementById("toast-quip").textContent = `"${label}" — send this to your spouse.`;
       toast.classList.remove("toast-onboarding");
       toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 3500);
+      toastDismissTimer = setTimeout(() => toast.classList.remove("show"), 3500);
 
       const url = buildShareURL();
       const isMobile = isMobileDevice();

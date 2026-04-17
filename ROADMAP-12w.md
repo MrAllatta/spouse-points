@@ -6,7 +6,7 @@
 
 **References:** Execution detail lives in `BUILD-v2.md`. Product truth lives in `SPEC.md`.
 
-**Repo status (2026-04-13):** In this tree, `BUILD-v2.md` **Steps 1–10** are implemented in `index.html` (URL sync, SMS handoffs, settings, category CRUD, PWA shell). Treat rows below as **cadence / verification / narrative** guides; several “weeks” landed together in one push. Next honest gaps are **real-device QA**, **hardening**, and **optional** week 10–12 items (tips, PDF, edge-case pass) — not missing core loop code.
+**Repo status (2026-04-17):** In this tree, `BUILD-v2.md` **Steps 1–11** are implemented in `index.html`, and Step 12 timer infrastructure is partially shipped (URL sync, SMS handoffs, settings, category CRUD, PWA shell, lifecycle resume hooks, coordinated toast dismissal). Treat rows below as **cadence / verification / narrative** guides; several “weeks” landed together in one push. Next honest gaps are **real-device QA evidence**, **burst-order validation**, and final **interaction polish** — not missing core loop code.
 
 ---
 
@@ -44,7 +44,7 @@
 
 **Regression checklist requirement:** before wider beta sharing, run the request/award sync integrity checklist in `BUILD-v2.md` after any sync-flow changes. Treat failures as blockers, not polish.
 
-**Status (2026-04-14):** forced names + no visible A/B language + copy/vocabulary pass + desktop copy-first handoff are implemented in `index.html`; the multi-select awards toggle is implemented and currently initializes on for fresh local state; **exhausted-parent gate test passed** — app launched, opened, message sent without the “what am I supposed to do?” moment; tester was **not fully cold** (some prior context), but the pass condition was met. Wider beta remains gated on other items (e.g. burst-send / sync matrix in *Immediate pre-beta blocker plan*).
+**Status (2026-04-17):** forced names + no visible A/B language + copy/vocabulary pass + desktop copy-first handoff are implemented in `index.html`; the multi-select awards toggle is implemented and currently initializes on for fresh local state; **exhausted-parent gate test passed** — app launched, opened, message sent without the “what am I supposed to do?” moment; tester was **not fully cold** (some prior context), but the pass condition was met. Since then, lifecycle resume listeners (`pageshow`/`hashchange`/`visibilitychange`) and toast timer coordination landed; wider beta remains gated on device-matrix verification and burst-send sync evidence.
 
 **Latest spouse-test input (2026-04-14):** first question was whether multiple items can be clicked in one award action. Treat this as a strong signal to evaluate a multi-select award option after the pre-beta clarity gate; feasibility is medium-high with current category/points model, but must be tested against "quick notice" simplicity.
 
@@ -52,7 +52,7 @@
 
 **Latest planning question (2026-04-14):** validate burst-send sync semantics: if multiple awards and then a request are sent before partner opens any message, the newest link should include sender-current state so receiver can open only the latest message and still land fully up to date.
 
-**Staged UI polish (2026-04-14):** mobile category buttons currently **collapse to one column** at `max-width: 480px` even when two columns would still fit — see `BUILD-v2.md` section *Staged backlog — mobile category grid (two columns)* for problem statement, code anchor in `index.html`, and a three-stage fix (breakpoint / `auto-fit` grid / device QA). Treat as **post–P0 sync work** unless pulled in as a small CSS-only polish.
+**Staged UI polish (2026-04-17):** mobile category buttons now collapse to one column at `max-width: 360px` (reduced from `480px`), which captures the first “easy win” from the staged backlog. Keep the broader two-column QA + potential `auto-fit` follow-up in `BUILD-v2.md` section *Staged backlog — mobile category grid (two columns)*.
 
 ### Immediate pre-beta blocker plan (must complete before wider tester pool)
 
