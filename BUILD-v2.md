@@ -438,6 +438,17 @@ if ("serviceWorker" in navigator) {
 - [x] PWA: installs to home screen on iOS and Android *(Step 10; confirm on device)*
 - [x] Offline: app loads after install with no network *(Step 10; confirm on device)*
 
+### Pack-Guided Notice Prototype Checklist (one-shot)
+
+- [ ] Settings toggle exists: `Enable pack-guided notice (prototype)`.
+- [ ] Settings toggle exists: `Show pack context in ledger`.
+- [ ] Award mode shows guided panel with cultural lens, contextual chips, optional why text.
+- [ ] Request mode hides guided panel.
+- [ ] Awarded entries persist optional `culturalPackId`, `contextualTagIds`, `whyItMattered`.
+- [ ] Ledger shows context line when enabled and omits it when toggle is off.
+- [ ] Legacy entries (no pack fields) render without errors.
+- [ ] Manual run (5-7 days) records completion friction + felt recognition quality.
+
 ---
 
 ## Pre-beta quality gate (clarity first)

@@ -30,6 +30,39 @@ adulting_contexts:
   - id: repair_over_winning
     note: Choosing the relationship over the last word in an argument.
 
+prototype_pack_guided_notice:
+  note: >-
+    Starter copy for Cultural + Contextual prototype flow. Keep descriptive and local;
+    this is a noticing aid, not a universal fairness model.
+  cultural_packs:
+    - id: anticipation
+      label: "Anticipation labor"
+      prompt: "They prevented future friction before it landed."
+    - id: emotional_buffering
+      label: "Emotional buffering"
+      prompt: "They kept tone steady under pressure."
+    - id: social_kinship
+      label: "Social kinship maintenance"
+      prompt: "They carried family or social connection load."
+    - id: repair_bid
+      label: "Repair bid"
+      prompt: "They turned toward the relationship over being right."
+    - id: coordination_load
+      label: "Coordination load"
+      prompt: "They tracked details so life stayed runnable."
+  contextual_tags:
+    - "Low energy day"
+    - "Work crunch"
+    - "Caregiving overload"
+    - "Time compressed"
+    - "Social/family overhead"
+    - "Health strain"
+    - "Money stress"
+    - "Logistics pileup"
+  microcopy:
+    - "Use any lens that helps describe what happened; skip what does not fit."
+    - "This is for noticing, not judging."
+
 # Category metadata mirrors index.html `categories` (emoji, label, key).
 categories:
   - { emoji: "🍳", label: "Cooked", key: cooked }

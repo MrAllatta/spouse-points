@@ -178,6 +178,35 @@ The ratio of spontaneous to requested awards over time is the real signal.
 
 ## Planned Features (Not Yet Built)
 
+## Prototype Focus: Pack-Guided Notice Loop (2026-04)
+
+### Hypothesis
+
+Adding a light "Cultural lens + Contextual tags + optional why line" step to `Notice Partner` will improve felt recognition quality without adding unacceptable send friction.
+
+### In-scope behaviors
+
+- Optional guided panel in award mode only (can be disabled in Settings).
+- Cultural lens single-select, contextual tag multi-select, optional free-text "why it mattered here."
+- Award payload and ledger rows can carry this context.
+- Pending/request rows may display context when present.
+- Existing entries without context continue to render normally.
+
+### Non-goals
+
+- Universal scoring model or fairness engine.
+- Cross-device pack catalog sync.
+- Schema migration or backend work.
+- Replacing category-based quick notice flow.
+
+### What to observe in live use (5-7 days)
+
+- Conversation quality: more specific appreciation vs vague "thanks."
+- Repair tone: less prosecutorial language around effort.
+- Friction: does guided notice still complete quickly (<30s target)?
+- Abandonment: where users drop off (lens, context chips, or why text).
+- Preference split: when users keep prototype toggle on vs off.
+
 ### Point Decay
 Points expire over time. Effective score = `points × decay(days_since_award)`.
 

@@ -239,6 +239,91 @@
       color: var(--text-light);
     }
 
+    .pack-guided {
+      margin-bottom: 1rem;
+      padding: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fcfaf6;
+    }
+
+    .pack-guided-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.2rem;
+    }
+
+    .pack-guided-hint {
+      font-size: 0.78rem;
+      color: var(--text-light);
+      margin-bottom: 0.65rem;
+      line-height: 1.35;
+    }
+
+    .pack-guided-label {
+      display: block;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 1.1px;
+      color: var(--text-light);
+      margin-bottom: 0.3rem;
+    }
+
+    .pack-select {
+      width: 100%;
+      padding: 0.6rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #fff;
+      font-family: inherit;
+      font-size: 0.88rem;
+      color: var(--text);
+      margin-bottom: 0.6rem;
+    }
+
+    .context-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.38rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .context-chip {
+      padding: 0.34rem 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      font-family: inherit;
+      font-size: 0.75rem;
+      color: var(--text-light);
+      cursor: pointer;
+    }
+
+    .context-chip.selected {
+      border-color: var(--accent);
+      background: #fef1ec;
+      color: var(--text);
+    }
+
+    .pack-why {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      resize: vertical;
+      min-height: 56px;
+    }
+
+    .pack-entry-context {
+      margin-top: 0.25rem;
+      font-size: 0.8rem;
+      color: var(--text-light);
+      line-height: 1.35;
+    }
+
     .award-btn {
       width: 100%;
       padding: 0.9rem;
@@ -997,6 +1082,19 @@
 
     <p class="role-hint" id="role-hint" aria-live="polite"></p>
 
+    <div class="pack-guided" id="pack-guided-panel">
+      <div class="pack-guided-title">Pack-guided notice (prototype)</div>
+      <div class="pack-guided-hint">Descriptive lens only. Use what helps; skip what does not fit this moment.</div>
+      <label class="pack-guided-label" for="pack-lens-select">Cultural lens</label>
+      <select class="pack-select" id="pack-lens-select" onchange="onPackLensChange(this)">
+        <option value="">None (notice without a lens)</option>
+      </select>
+      <label class="pack-guided-label">Contextual tags</label>
+      <div class="context-chip-row" id="pack-context-tags"></div>
+      <label class="pack-guided-label" for="pack-why">Why it mattered here (optional)</label>
+      <textarea class="pack-why" id="pack-why" maxlength="180" placeholder="Low energy day, social load, hard timing, etc." oninput="onPackWhyInput(this)"></textarea>
+    </div>
+
     <div class="multiplier-toggle" id="multiplier-row">
       <button type="button" class="mult-btn active" data-mult="1" onclick="setMultiplier(1)">1×</button>
       <button type="button" class="mult-btn" data-mult="2" onclick="setMultiplier(2)">2×</button>
@@ -1077,6 +1175,24 @@
         onchange="onMultiSelectToggleChange(this)"
       />
     </div>
+    <div class="settings-toggle-row">
+      <span class="settings-toggle-label">Enable pack-guided notice (prototype)</span>
+      <input
+        type="checkbox"
+        class="settings-toggle-input"
+        id="settings-pack-prototype-toggle"
+        onchange="onPackPrototypeToggleChange(this)"
+      />
+    </div>
+    <div class="settings-toggle-row">
+      <span class="settings-toggle-label">Show pack context in ledger</span>
+      <input
+        type="checkbox"
+        class="settings-toggle-input"
+        id="settings-pack-ledger-toggle"
+        onchange="onPackLedgerToggleChange(this)"
+      />
+    </div>
 
   </div>
 
@@ -1127,6 +1243,25 @@
       "This may or may not have happened. Allegedly.",
       "Requesting acknowledgment. No pressure. Some pressure.",
       "Filed for consideration. Take your time. (Please don't take your time.)",
+    ];
+
+    const culturalPacks = [
+      { id: "anticipation", label: "Anticipation labor", prompt: "They prevented future friction before it landed." },
+      { id: "emotional-buffering", label: "Emotional buffering", prompt: "They kept tone steady under pressure." },
+      { id: "social-kinship", label: "Social kinship maintenance", prompt: "They carried family or social connection load." },
+      { id: "repair-bid", label: "Repair bid", prompt: "They turned toward the relationship over being right." },
+      { id: "coordination-load", label: "Coordination load", prompt: "They tracked details so life stayed runnable." },
+    ];
+
+    const contextualTags = [
+      { id: "low-energy", label: "Low energy day" },
+      { id: "work-crunch", label: "Work crunch" },
+      { id: "caregiving-load", label: "Caregiving overload" },
+      { id: "time-compression", label: "Time compressed" },
+      { id: "social-overhead", label: "Social/family overhead" },
+      { id: "health-strain", label: "Health strain" },
+      { id: "money-stress", label: "Money stress" },
+      { id: "logistics-pileup", label: "Logistics pileup" },
     ];
 
     const quips = {
@@ -1239,6 +1374,11 @@
       microMomentShown: null,
       microMomentPending: false,
       betaMultiSelectAwards: true,
+      enablePackGuidedNotice: true,
+      showPackContextInLedger: true,
+      selectedCulturalPackId: "",
+      selectedContextualTagIds: [],
+      whyItMattered: "",
       nameSetupHintShown: false,
       messageAppOnboardingShown: false,
       lastAppliedPacketTs: 0,
@@ -1256,6 +1396,60 @@
     function categoryLabelForKey(key) {
       const row = state.categories.find((c) => c.key === key);
       return row ? row.label : null;
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function getCulturalPackById(id) {
+      return culturalPacks.find((p) => p.id === id) || null;
+    }
+
+    function getContextTagLabel(id) {
+      const row = contextualTags.find((t) => t.id === id);
+      return row ? row.label : null;
+    }
+
+    function buildPackContextText(packId, contextualIds, whyItMattered) {
+      const pack = getCulturalPackById(packId);
+      const tags = (Array.isArray(contextualIds) ? contextualIds : [])
+        .map((id) => getContextTagLabel(id))
+        .filter(Boolean);
+      const why = String(whyItMattered || "").trim();
+      const parts = [];
+      if (pack) parts.push(`noticed through: ${pack.label}`);
+      if (tags.length) parts.push(`context: ${tags.join(", ")}`);
+      if (why) parts.push(`mattered because: ${why}`);
+      return parts.join(" | ");
+    }
+
+    function renderPackGuidedUi() {
+      const panel = document.getElementById("pack-guided-panel");
+      const select = document.getElementById("pack-lens-select");
+      const tagsHost = document.getElementById("pack-context-tags");
+      const why = document.getElementById("pack-why");
+      if (!panel || !select || !tagsHost || !why) return;
+      const showPanel = state.mode === "award" && state.enablePackGuidedNotice;
+      panel.style.display = showPanel ? "block" : "none";
+      if (!showPanel) return;
+
+      select.innerHTML = `<option value="">None (notice without a lens)</option>${culturalPacks
+        .map((p) => `<option value="${escapeAttr(p.id)}">${escapeHtml(p.label)} - ${escapeHtml(p.prompt)}</option>`)
+        .join("")}`;
+      select.value = state.selectedCulturalPackId || "";
+
+      tagsHost.innerHTML = contextualTags
+        .map((t) => {
+          const selected = state.selectedContextualTagIds.includes(t.id) ? " selected" : "";
+          return `<button type="button" class="context-chip${selected}" onclick="toggleContextualTag('${escapeAttr(t.id)}')">${escapeHtml(t.label)}</button>`;
+        })
+        .join("");
+      why.value = state.whyItMattered || "";
     }
 
     function pendingReferencesCategoryKey(key) {
@@ -1429,6 +1623,8 @@
       renderSettingsCategoryEditor();
       syncCustomPointsInputFromState();
       syncMultiSelectToggleFromState();
+      syncPackSettingsToggles();
+      renderPackGuidedUi();
       syncNames();
       const copyBtn = document.getElementById("desktop-handoff-copy");
       if (copyBtn) copyBtn.addEventListener("click", copyDesktopHandoffMessage);
@@ -1524,6 +1720,13 @@
       el.checked = !!state.betaMultiSelectAwards;
     }
 
+    function syncPackSettingsToggles() {
+      const enableToggle = document.getElementById("settings-pack-prototype-toggle");
+      const ledgerToggle = document.getElementById("settings-pack-ledger-toggle");
+      if (enableToggle) enableToggle.checked = !!state.enablePackGuidedNotice;
+      if (ledgerToggle) ledgerToggle.checked = !!state.showPackContextInLedger;
+    }
+
     function onMultiSelectToggleChange(el) {
       state.betaMultiSelectAwards = !!el.checked;
       if (!state.betaMultiSelectAwards) state.selectedAwardCategories = [];
@@ -1531,6 +1734,44 @@
       saveState();
       renderCategoryButtons();
       updateRoleHint();
+      renderPackGuidedUi();
+    }
+
+    function onPackPrototypeToggleChange(el) {
+      state.enablePackGuidedNotice = !!el.checked;
+      if (!state.enablePackGuidedNotice) {
+        state.selectedCulturalPackId = "";
+        state.selectedContextualTagIds = [];
+        state.whyItMattered = "";
+      }
+      saveState();
+      renderPackGuidedUi();
+      updateRoleHint();
+    }
+
+    function onPackLedgerToggleChange(el) {
+      state.showPackContextInLedger = !!el.checked;
+      saveState();
+      renderHistory();
+      renderPending();
+    }
+
+    function onPackLensChange(el) {
+      state.selectedCulturalPackId = String(el.value || "").trim();
+      saveState();
+    }
+
+    function toggleContextualTag(tagId) {
+      const idx = state.selectedContextualTagIds.indexOf(tagId);
+      if (idx >= 0) state.selectedContextualTagIds.splice(idx, 1);
+      else state.selectedContextualTagIds.push(tagId);
+      saveState();
+      renderPackGuidedUi();
+    }
+
+    function onPackWhyInput(el) {
+      state.whyItMattered = String(el.value || "").trim();
+      saveState();
     }
 
     function openSettings() {
@@ -1542,6 +1783,7 @@
       renderSettingsCategoryEditor();
       syncCustomPointsInputFromState();
       syncMultiSelectToggleFromState();
+      syncPackSettingsToggles();
       document.getElementById("settings-backdrop").classList.add("open");
       document.getElementById("settings-panel").classList.add("open");
     }
@@ -1612,7 +1854,9 @@
         return;
       }
       if (state.mode === "award") {
-        if (state.betaMultiSelectAwards) {
+        if (state.enablePackGuidedNotice) {
+          el.textContent = `Choose what to notice, optionally add lens/context, then Give Points to ${spouse}.`;
+        } else if (state.betaMultiSelectAwards) {
           el.textContent = `Tap one or more items, then Give Points to ${spouse}.`;
         } else {
           el.textContent = `Tap one item, then Give Points to ${spouse}.`;
@@ -1678,6 +1922,9 @@
       state.mode = mode;
       if (mode !== "award") {
         state.selectedAwardCategories = [];
+        state.selectedCulturalPackId = "";
+        state.selectedContextualTagIds = [];
+        state.whyItMattered = "";
         document.querySelectorAll(".category-btn").forEach((b) => b.classList.remove("selected"));
       }
       document.getElementById("mode-award").classList.toggle("active", mode === "award");
@@ -1688,6 +1935,7 @@
       btn.textContent = mode === "award" ? "Give Points" : "Send Request";
       btn.className = mode === "award" ? "award-btn" : "request-submit";
       document.getElementById("multiplier-row").style.display = mode === "award" ? "flex" : "none";
+      renderPackGuidedUi();
       updateRoleHint();
       updateSubmitState();
     }
@@ -1792,6 +2040,9 @@
         time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
         requested: false,
         passed: false,
+        culturalPackId: state.enablePackGuidedNotice ? (state.selectedCulturalPackId || "") : "",
+        contextualTagIds: state.enablePackGuidedNotice ? state.selectedContextualTagIds.slice() : [],
+        whyItMattered: state.enablePackGuidedNotice ? (state.whyItMattered || "") : "",
       };
       state.history.unshift(entry);
       renderHistory();
@@ -1819,6 +2070,9 @@
         label: label,
         quip: quip,
         time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+        culturalPackId: "",
+        contextualTagIds: [],
+        whyItMattered: "",
       };
       state.pending.unshift(request);
       renderPending();
@@ -1857,6 +2111,9 @@
           time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
           requested: true,
           passed: false,
+          culturalPackId: request.culturalPackId || "",
+          contextualTagIds: Array.isArray(request.contextualTagIds) ? request.contextualTagIds : [],
+          whyItMattered: request.whyItMattered || "",
         };
         state.history.unshift(entry);
         renderHistory();
@@ -1877,7 +2134,11 @@
       document.querySelectorAll(".category-btn").forEach((b) => b.classList.remove("selected"));
       state.selectedCategory = null;
       state.selectedAwardCategories = [];
+      state.selectedCulturalPackId = "";
+      state.selectedContextualTagIds = [];
+      state.whyItMattered = "";
       setMultiplier(1);
+      renderPackGuidedUi();
     }
 
     function clearToastDismissTimer() {
@@ -2104,6 +2365,11 @@
             <div class="pending-who">${r.requesterName} &middot; ${r.time}</div>
             <div class="pending-text">
               <div class="pending-label">${r.label}</div>
+              ${
+                state.showPackContextInLedger
+                  ? `<div class="pack-entry-context">${escapeHtml(buildPackContextText(r.culturalPackId, r.contextualTagIds, r.whyItMattered) || "")}</div>`
+                  : ""
+              }
               <div class="pending-quip">${r.quip}</div>
             </div>
             ${
@@ -2140,9 +2406,14 @@
             !e.passed && e.quip
               ? `<div class="entry-quip">${e.quip}</div>`
               : "";
+          const packLine =
+            state.showPackContextInLedger
+              ? buildPackContextText(e.culturalPackId, e.contextualTagIds, e.whyItMattered)
+              : "";
           return `<div class="history-entry${e.passed ? " passed" : ""}">
             <div class="entry-block">
               <div class="entry-notice"><strong>${e.recipient}</strong>${tag} &middot; ${what}</div>
+              ${packLine ? `<div class="pack-entry-context">${escapeHtml(packLine)}</div>` : ""}
               ${quipLine}
             </div>
             ${pts}
@@ -2161,6 +2432,8 @@
         microMomentShown: state.microMomentShown,
         microMomentPending: state.microMomentPending,
         betaMultiSelectAwards: state.betaMultiSelectAwards,
+        enablePackGuidedNotice: state.enablePackGuidedNotice,
+        showPackContextInLedger: state.showPackContextInLedger,
         nameSetupHintShown: state.nameSetupHintShown,
         messageAppOnboardingShown: state.messageAppOnboardingShown,
         lastAppliedPacketTs: state.lastAppliedPacketTs,
@@ -2229,6 +2502,16 @@
           state.betaMultiSelectAwards = data.betaMultiSelectAwards;
         } else {
           state.betaMultiSelectAwards = true;
+        }
+        if (typeof data.enablePackGuidedNotice === "boolean") {
+          state.enablePackGuidedNotice = data.enablePackGuidedNotice;
+        } else {
+          state.enablePackGuidedNotice = true;
+        }
+        if (typeof data.showPackContextInLedger === "boolean") {
+          state.showPackContextInLedger = data.showPackContextInLedger;
+        } else {
+          state.showPackContextInLedger = true;
         }
         if (typeof data.nameSetupHintShown === "boolean") {
           state.nameSetupHintShown = data.nameSetupHintShown;
