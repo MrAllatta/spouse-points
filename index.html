@@ -201,6 +201,44 @@
 
     .custom-reason:focus { border-color: var(--accent); }
 
+    .custom-entry-wrap {
+      margin-bottom: 1rem;
+    }
+
+    .custom-entry-row {
+      display: flex;
+      gap: 0.6rem;
+      align-items: flex-start;
+    }
+
+    .custom-entry-row .custom-reason {
+      margin-bottom: 0;
+      flex: 1;
+    }
+
+    .custom-points-input {
+      width: 6.2rem;
+      flex-shrink: 0;
+      padding: 0.8rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      text-align: right;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .custom-points-input:focus {
+      border-color: var(--accent);
+    }
+
+    .custom-points-help {
+      margin-top: 0.35rem;
+      font-size: 0.78rem;
+      color: var(--text-light);
+    }
+
     .award-btn {
       width: 100%;
       padding: 0.9rem;
@@ -920,6 +958,8 @@
       .scoreboard { gap: 1rem; }
       .score-card .points { font-size: 2.2rem; }
       .category-grid { grid-template-columns: 1fr; }
+      .custom-entry-row { flex-direction: column; }
+      .custom-points-input { width: 100%; text-align: left; }
     }
   </style>
 </head>
@@ -963,10 +1003,16 @@
       <button type="button" class="mult-btn" data-mult="3" onclick="setMultiplier(3)">3×</button>
     </div>
 
-    <div class="category-grid" id="categories"></div>
+    <div class="custom-entry-wrap">
+      <div class="custom-entry-row">
+        <textarea class="custom-reason" id="custom-reason" rows="2"
+                  placeholder="Write what you noticed..."></textarea>
+        <input type="number" class="custom-points-input" id="custom-points" min="0" max="999999999" step="1" placeholder="Pts" aria-label="Points for this custom notice" />
+      </div>
+      <div class="custom-points-help">If you write your own notice, choose the points for this entry.</div>
+    </div>
 
-    <textarea class="custom-reason" id="custom-reason" rows="2"
-              placeholder="Or write your own reason..."></textarea>
+    <div class="category-grid" id="categories"></div>
 
     <button class="award-btn" id="submit-btn" onclick="handleSubmit()">Give Points</button>
   </div>
@@ -979,9 +1025,9 @@
   </div>
 
   <div class="history">
-    <h3>Ledger of Noticings</h3>
+    <h3>Ledger of What You Noticed</h3>
     <div id="history-list">
-      <div class="history-empty">No notices yet. Start with one thing your spouse did.</div>
+      <div class="history-empty">No notices yet. Start with one thing you noticed.</div>
     </div>
   </div>
 
@@ -1690,6 +1736,7 @@
 
     function awardPoints() {
       const custom = document.getElementById("custom-reason").value.trim();
+      const customPointsInput = document.getElementById("custom-points");
       const cat = state.selectedCategory;
       const selectedKeys = state.betaMultiSelectAwards
         ? state.selectedAwardCategories.slice()
@@ -1701,7 +1748,17 @@
       let keyForQuip = "custom";
       let detail = custom || undefined;
 
-      if (state.betaMultiSelectAwards && selectedKeys.length > 0) {
+      if (custom) {
+        const parsedCustomPoints = parseInt(String(customPointsInput.value || "").trim(), 10);
+        if (!Number.isFinite(parsedCustomPoints) || parsedCustomPoints < 0) {
+          showInfoToast("Add custom points", "Pick points for your custom notice.", 2200);
+          customPointsInput.focus();
+          return;
+        }
+        points = parsedCustomPoints * state.multiplier;
+        categoryLabel = "Custom";
+        keyForQuip = "custom";
+      } else if (state.betaMultiSelectAwards && selectedKeys.length > 0) {
         const labels = selectedKeys.map((k) => categoryLabelForKey(k) || "Custom");
         const base = selectedKeys.reduce((sum, k) => sum + pointsForKey(k), 0);
         points = base * state.multiplier;
@@ -1816,6 +1873,7 @@
 
     function clearForm() {
       document.getElementById("custom-reason").value = "";
+      document.getElementById("custom-points").value = "";
       document.querySelectorAll(".category-btn").forEach((b) => b.classList.remove("selected"));
       state.selectedCategory = null;
       state.selectedAwardCategories = [];
@@ -2065,7 +2123,7 @@
       const list = document.getElementById("history-list");
       if (state.history.length === 0) {
         list.innerHTML =
-          '<div class="history-empty">No notices yet. Start with one thing your spouse did.</div>';
+          '<div class="history-empty">No notices yet. Start with one thing you noticed.</div>';
         return;
       }
       list.innerHTML = state.history
