@@ -4,6 +4,23 @@ A **mirror** for two people: domestic labor and emotional effort made visible, n
 
 > "A little scoreboard helps us laugh while we learn to notice each other."
 
+## Guiding Principle: Love Keeps No Record of Wrongs
+
+This app is secular, but it can still honor durable human wisdom. A guiding line for this product comes from **1 Corinthians 13:4-8 (NIV)**:
+
+> "Love is patient, love is kind... it keeps no record of wrongs... Love never fails."
+
+For Spouse Points, that means the app should train attention toward appreciation, not accumulation of evidence. The scoreboard can be playful scaffolding, but the deeper work is helping partners notice each other's effort in real time and let old grievances lose their administrative power.
+
+Practical guidance for development:
+- Build features that increase warmth, generosity, repair, and present-moment noticing.
+- Reject features that make it easier to prosecute a case, replay old harms, or "win" arguments.
+- Treat ledger/history as a gentle mirror, never a courtroom archive.
+- Keep copy and interaction tone biased toward grace: specific recognition, quick recovery, low shame.
+- When in doubt, choose the implementation that helps partners turn toward each other now rather than tally yesterday forever.
+
+This passage is not here as theology enforcement; it is here as product discipline. If a feature helps people keep score of injury, it fights the soul of what we are building.
+
 ## Courtroom Test (North Star Constraint)
 
 The app must never feel more "real" than the relationship.
