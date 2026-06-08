@@ -976,6 +976,10 @@
     </div>
   </header>
 
+  <div data-storage-warning style="display:none;background:#fce4e4;padding:8px;border-radius:6px;margin-bottom:8px;font-size:14px;text-align:center;color:#c0392b;max-width:600px;width:calc(100% - 2rem);margin-left:auto;margin-right:auto;">
+    ⚠️ Points may not save on this device. For best results, add this page to your Home Screen.
+  </div>
+
   <div class="scoreboard">
     <div class="score-card">
       <div class="name-display" id="display-name-a">YOU</div>
@@ -1077,6 +1081,9 @@
         onchange="onMultiSelectToggleChange(this)"
       />
     </div>
+
+    <hr style="margin:16px 0;border:0;border-top:1px solid #ddd;">
+    <button onclick="clearAppCache()" style="background:#e74c3c;color:#fff;border:none;border-radius:6px;padding:8px 12px;font-size:13px;cursor:pointer;width:100%;">Clear app cache</button>
 
   </div>
 
@@ -1248,6 +1255,29 @@
     let toastDismissTimer = null;
     let iosAddToHomeHandoffHooked = false;
     let iosAddToHomeFallbackTimer = null;
+
+    // Storage wrapper with in-memory fallback for Safari Private Browsing / tracking protection
+    const Storage = {
+      _mem: {},
+      get(key) {
+        try { return localStorage.getItem(key); }
+        catch { return this._mem[key] ?? null; }
+      },
+      set(key, value) {
+        try { localStorage.setItem(key, value); return true; }
+        catch { this._mem[key] = value; return false; }
+      }
+    };
+
+    function checkStorageHealth() {
+      const canary = '__sp_canary__';
+      try {
+        localStorage.setItem(canary, '1');
+        const ok = localStorage.getItem(canary) === '1';
+        localStorage.removeItem(canary);
+        return ok;
+      } catch { return false; }
+    }
 
     function cloneDefaultCategories() {
       return DEFAULT_CATEGORIES.map((c) => ({ ...c }));
@@ -1457,6 +1487,11 @@
 
       maybeScheduleIosAddToHomeHintFallback();
 
+      if (!checkStorageHealth()) {
+        const warnEl = document.querySelector('[data-storage-warning]');
+        if (warnEl) warnEl.style.display = 'block';
+      }
+
       window.addEventListener("pageshow", (ev) => {
         if (ev.persisted) resumeSyncFromNavigation();
       });
@@ -1464,6 +1499,14 @@
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") resumeSyncFromNavigation();
       });
+
+      // Cross-tab localStorage changes — other tabs applied a sync URL
+      window.addEventListener("storage", (event) => {
+        if (event.key === "spouse-points") resumeSyncFromNavigation();
+      });
+
+      // Window focus — tab switching on desktop
+      window.addEventListener("focus", resumeSyncFromNavigation);
 
       document.addEventListener("keydown", (e) => {
         if (e.key !== "Escape") return;
@@ -1484,11 +1527,16 @@
         return;
       }
       try {
-        const raw = localStorage.getItem("spouse-points");
+        const raw = Storage.get("spouse-points");
         if (!raw) return;
         const data = JSON.parse(raw);
         const scores = data?.scores;
         const pending = data?.pending;
+
+        // Track whether scores changed to show synced indicator
+        const oldA = state.scores.a;
+        const oldB = state.scores.b;
+
         if (scores && Number.isFinite(scores.a) && Number.isFinite(scores.b)) {
           state.scores = scores;
         }
@@ -1496,7 +1544,29 @@
           state.pending = pending;
         }
         syncRenderedScoresAndPendingFromState();
+
+        if (state.scores.a !== oldA || state.scores.b !== oldB) {
+          showSyncedIndicator();
+        }
       } catch (e) {}
+    }
+
+    function showSyncedIndicator() {
+      const existing = document.getElementById("synced-indicator");
+      let el = existing;
+      if (!el) {
+        el = document.createElement("div");
+        el.id = "synced-indicator";
+        el.style.cssText =
+          "position:fixed;bottom:16px;left:50%;transform:translateX(-50%);" +
+          "background:#2ecc71;color:#fff;padding:6px 14px;border-radius:20px;" +
+          "font-size:13px;z-index:100;opacity:0;transition:opacity 0.3s;";
+        document.body.appendChild(el);
+      }
+      el.textContent = "\u2713 Synced";
+      el.style.opacity = "1";
+      if (el._fadeTimer) clearTimeout(el._fadeTimer);
+      el._fadeTimer = setTimeout(() => { el.style.opacity = "0"; }, 2000);
     }
 
     function onCustomPointChange(el) {
@@ -2044,9 +2114,50 @@
       }
     }
 
-    function openMessages(precomposedText) {
-      const encoded = encodeURIComponent(precomposedText);
-      window.location.href = `sms:?body=${encoded}`;
+    function getSmsUrl(body) {
+      const encoded = encodeURIComponent(body);
+      const ua = navigator.userAgent;
+      if (/iPhone|iPad|iPod/i.test(ua)) return `sms:&body=${encoded}`;
+      if (/Android/i.test(ua))           return `sms:?body=${encoded}`;
+      return null;
+    }
+
+    function openMessages(url) {
+      const smsUrl = getSmsUrl(url);
+      if (!smsUrl || smsUrl.length > 1800) {
+        showCopyFallback(url);
+        return;
+      }
+      window.location.href = smsUrl;
+      setTimeout(() => showCopyFallback(url), 1500);
+    }
+
+    function showCopyFallback(url) {
+      const toast = document.getElementById('toast');
+      if (toast) toast.classList.remove('show');
+      let fallback = document.getElementById('sms-fallback');
+      if (!fallback) {
+        fallback = document.createElement('div');
+        fallback.id = 'sms-fallback';
+        fallback.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid #e07a5f;padding:16px;box-shadow:0 -4px 12px rgba(0,0,0,0.15);z-index:1000;text-align:center;';
+        fallback.innerHTML = `
+          <p style="margin:0 0 8px;font-size:14px;color:#555;">Copy this link and send it to your partner</p>
+          <input type="text" id="sms-fallback-url" readonly style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;margin-bottom:8px;box-sizing:border-box;text-align:center;" />
+          <button id="sms-fallback-copy" style="background:#e07a5f;color:#fff;border:none;border-radius:6px;padding:10px 24px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Copy Link</button>
+        `;
+        document.body.appendChild(fallback);
+        document.getElementById('sms-fallback-copy').addEventListener('click', () => {
+          const input = document.getElementById('sms-fallback-url');
+          input.select();
+          navigator.clipboard.writeText(input.value).then(() => {
+            const btn = document.getElementById('sms-fallback-copy');
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => { btn.textContent = 'Copy Link'; }, 2000);
+          });
+        });
+      }
+      document.getElementById('sms-fallback-url').value = url;
+      fallback.style.display = 'block';
     }
 
     function showRequestToastThenHandoff(requesterName, label) {
@@ -2170,12 +2281,12 @@
           b: document.getElementById("name-b").value,
         },
       };
-      try { localStorage.setItem("spouse-points", JSON.stringify(data)); } catch (e) {}
+      Storage.set("spouse-points", JSON.stringify(data));
     }
 
     function loadState() {
       try {
-        const raw = localStorage.getItem("spouse-points");
+        const raw = Storage.get("spouse-points");
         if (!raw) {
           state.categories = cloneDefaultCategories();
           return;
@@ -2256,16 +2367,18 @@
     }
 
     function buildSyncPacket() {
-      return {
+      const packet = {
         v: 1,
-        scores: state.scores,
-        names: {
-          a: document.getElementById("name-a").value,
-          b: document.getElementById("name-b").value,
-        },
+        a: state.scores.a,
+        b: state.scores.b,
+        nA: document.getElementById("name-a").value,
+        nB: document.getElementById("name-b").value,
         pending: state.pending,
         ts: Date.now(),
       };
+      packet.txId = Math.random().toString(36).slice(2, 10);
+      packet.ts = Date.now();
+      return packet;
     }
 
     function buildShareURL() {
@@ -2290,13 +2403,12 @@
      * (typos or wrong field) — swap logic cannot orient safely.
      */
     function packetNamesMismatchLocal(packet) {
-      const pn = packet.names;
-      if (!pn || typeof pn !== "object") return false;
-      const pa = normNamePart(pn.a);
-      const pb = normNamePart(pn.b);
+      const pa = normNamePart(packet.nA);
+      const pb = normNamePart(packet.nB);
+      if (!pa || !pb) return false;
       const la = normNamePart(document.getElementById("name-a").value);
       const lb = normNamePart(document.getElementById("name-b").value);
-      if (!pa || !pb || !la || !lb) return false;
+      if (!la || !lb) return false;
       if (pa === la && pb === lb) return false;
       if (pa === lb && pb === la) return false;
       if (pa === la || pa === lb || pb === la || pb === lb) return false;
@@ -2324,10 +2436,8 @@
 
     /** Each install keeps A = this phone’s user and B = spouse; the sender’s packet may use the same or flipped A/B. */
     function incomingRolesAreOppositeLocal(packet) {
-      const pn = packet.names;
-      if (!pn || typeof pn !== "object") return false;
-      const pa = normNamePart(pn.a);
-      const pb = normNamePart(pn.b);
+      const pa = normNamePart(packet.nA);
+      const pb = normNamePart(packet.nB);
       const la = normNamePart(document.getElementById("name-a").value);
       const lb = normNamePart(document.getElementById("name-b").value);
       if (!pa || !la || !lb) return false;
@@ -2352,12 +2462,23 @@
 
     function applyPacket(packet) {
       if (!packet || packet.v !== 1) return false;
+      // Dedup guard: skip if we've already applied this transaction
+      const seen = JSON.parse(Storage.get('sp_seen_tx') || '[]');
+      if (seen.includes(packet.txId)) return false; // already applied, silent drop
+      seen.push(packet.txId);
+      if (seen.length > 100) seen.shift();   // keep list bounded
+      Storage.set('sp_seen_tx', JSON.stringify(seen));
+
+      // Timestamp guard: skip if this packet is older than the last applied one
+      const lastTs = parseInt(Storage.get('sp_last_ts') || '0', 10);
+      if (packet.ts <= lastTs) return false;  // older than already-applied, drop
+      Storage.set('sp_last_ts', String(packet.ts));
       const packetTs = typeof packet.ts === "number" && Number.isFinite(packet.ts) ? packet.ts : 0;
       if (packetTs && state.lastAppliedPacketTs && packetTs < state.lastAppliedPacketTs) return false;
-      let scores = packet.scores;
+      // Build scores object from short key aliases
+      if (!Number.isFinite(packet.a) || !Number.isFinite(packet.b)) return false;
+      let scores = { a: packet.a, b: packet.b };
       let pending = packet.pending || [];
-      if (!scores || typeof scores !== "object") return false;
-      if (!Number.isFinite(scores.a) || !Number.isFinite(scores.b)) return false;
       if (!Array.isArray(pending)) pending = [];
       const swap = incomingRolesAreOppositeLocal(packet);
       if (swap) {
@@ -2388,11 +2509,52 @@
     console.assert(pointValues.coffee === 1, "pointValues.coffee should be 1");
     console.assert(pointValues.birth === 1000000, "pointValues.birth should be 1_000_000");
 
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js");
+    function showUpdateBanner() {
+      const banner = document.createElement('div');
+      banner.id = 'sw-update-banner';
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#e07a5f;color:#fff;padding:12px 16px;text-align:center;font-size:15px;z-index:999;display:flex;justify-content:center;align-items:center;gap:12px;';
+      banner.innerHTML = 'A new version is ready. <button id="sw-update-btn" style="background:#fff;color:#e07a5f;border:none;border-radius:4px;padding:6px 14px;font-size:14px;font-weight:600;cursor:pointer;">Update now</button>';
+      document.body.prepend(banner);
+      document.getElementById('sw-update-btn').addEventListener('click', () => {
+        navigator.serviceWorker.ready.then(reg => {
+          reg.waiting?.postMessage({ type: 'SKIP_WAITING' });
+        });
+      });
+    }
+
+    function clearAppCache() {
+      if (confirm('Clear app cache and reload? This will not delete your points.')) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          regs.forEach(r => r.unregister());
+          location.reload();
+        });
+      }
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then(reg => {
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdateBanner();
+            }
+          });
+        });
+      });
+      navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
     }
 
     init();
+
+    // Testability exports — enables Playwright / vitest to call
+    // pure logic functions via page.evaluate(() => window.__sp.*)
+    window.__sp = {
+      buildSyncPacket: buildSyncPacket,
+      buildShareURL: buildShareURL,
+      applyPacket: applyPacket,
+      checkHashState: checkHashState,
+    };
   </script>
 </body>
 </html>
