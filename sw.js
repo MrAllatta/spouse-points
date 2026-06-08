@@ -1,4 +1,6 @@
-const CACHE = "spouse-points-v2";
+// IMPORTANT: Increment CACHE_NAME on every deploy to force cache refresh
+const CACHE_NAME = 'sp-v16';
+
 const SHELL = [
   "./",
   "./index.html",
@@ -8,8 +10,21 @@ const SHELL = [
 ];
 
 self.addEventListener("install", (e) =>
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)))
+  e.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(SHELL)))
 );
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener("message", event => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
+});
 
 self.addEventListener("fetch", (e) => {
   e.respondWith(
