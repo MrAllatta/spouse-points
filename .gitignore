@@ -1,1 +1,4 @@
+test-results/
+package-lock.json
+node_modules/
 .omo/
